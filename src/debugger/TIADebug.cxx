@@ -279,7 +279,7 @@ bool TIADebug::refPF(int newVal)
 {
   if(newVal > -1)
   {
-    int tmp = myTIA.myCTRLPF;
+    int tmp = myTIA.myPlayfield.getCTRLPF();
     if(newVal)
       tmp |= 0x01;
     else
@@ -287,7 +287,7 @@ bool TIADebug::refPF(int newVal)
     mySystem.poke(CTRLPF, tmp);
   }
 
-  return myTIA.myCTRLPF & 0x01;
+  return myTIA.myPlayfield.myCTRLPF & 0x01;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -295,7 +295,7 @@ bool TIADebug::scorePF(int newVal)
 {
   if(newVal > -1)
   {
-    int tmp = myTIA.myCTRLPF;
+    int tmp = myTIA.myPlayfield.getCTRLPF();
     if(newVal)
       tmp |= 0x02;
     else
@@ -303,7 +303,7 @@ bool TIADebug::scorePF(int newVal)
     mySystem.poke(CTRLPF, tmp);
   }
 
-  return myTIA.myCTRLPF & 0x02;
+  return myTIA.myPlayfield.myCTRLPF & 0x02;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -311,7 +311,7 @@ bool TIADebug::priorityPF(int newVal)
 {
   if(newVal > -1)
   {
-    int tmp = myTIA.myCTRLPF;
+    int tmp = myTIA.myPlayfield.getCTRLPF();
     if(newVal)
       tmp |= 0x04;
     else
@@ -319,7 +319,7 @@ bool TIADebug::priorityPF(int newVal)
     mySystem.poke(CTRLPF, tmp);
   }
 
-  return myTIA.myCTRLPF & 0x04;
+  return myTIA.myPlayfield.myCTRLPF & 0x04;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -594,7 +594,7 @@ uInt8 TIADebug::ctrlPF(int newVal)
   if(newVal > -1)
     mySystem.poke(CTRLPF, newVal);
 
-  return myTIA.myCTRLPF;
+	return myTIA.myPlayfield.getCTRLPF();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -602,12 +602,12 @@ uInt8 TIADebug::sizeBL(int newVal)
 {
   if(newVal > -1)
   {
-    uInt8 tmp = myTIA.myCTRLPF & ~0x30;
+    uInt8 tmp = myTIA.myPlayfield.getCTRLPF() & ~0x30;
     tmp |= (newVal & 0x04) << 4;
     mySystem.poke(CTRLPF, tmp);
   }
 
-  return (myTIA.myCTRLPF & 0x30) >> 4;
+  return (myTIA.myPlayfield.myCTRLPF & 0x30) >> 4;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

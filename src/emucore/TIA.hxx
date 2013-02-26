@@ -458,13 +458,13 @@ class TIA : public Device
     uInt8 myNUSIZ0;       // Number and size of player 0 and missle 0
     uInt8 myNUSIZ1;       // Number and size of player 1 and missle 1
 
-    uInt8 myPlayfieldPriorityAndScore;
+    //uInt8 myPlayfieldPriorityAndScore;
     uInt8 myPriorityEncoder[2][256];
     uInt32 myColor[8];
     uInt32 myFixedColor[8];
     uInt32* myColorPtr;
 
-    uInt8 myCTRLPF;       // Playfield control register
+    //uInt8 myCTRLPF;       // Playfield control register
 
     //bool myREFP0;         // Indicates if player 0 is being reflected
     //bool myREFP1;         // Indicates if player 1 is being reflected
@@ -624,6 +624,12 @@ class TIA : public Device
     // Assignment operator isn't supported by this class so make it private
     TIA& operator = (const TIA&);
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 	class AbstractTIAObject 
 	{
 	public:
@@ -637,7 +643,12 @@ class TIA : public Device
 		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
 		virtual void handleRegisterUpdate(uInt8 addr, uInt8 value);
 
+		void handleEnabled(uInt32 value);
+
+	protected:
+		virtual uInt8 getEnableBit() = 0;
 		const TIA& myTia;
+		bool isEnabled;
 	};
 
 	class Playfield : public AbstractTIAObject
@@ -653,9 +664,23 @@ class TIA : public Device
 
     virtual void handleCTRLPF(uInt8 value);
 
+		// getter:
+		uInt8 getCTRLPF() {return myCTRLPF;}
+		uInt32 getPF() {return myPF;}
+		uInt8 getPriorityAndScore() {return myPriorityAndScore;}
+		uInt8 getEnabled(uInt32 hpos) {
+			return (isEnabled && (getMaskValue() & myMask[hpos])) ? getEnableBit() & myTia.myDisabledObjects : 0;
+		}
+		void newScanline();
+
+	protected:
+		uInt32 getMaskValue() {return myPF;}
+		uInt8 getEnableBit() {return PFBit;}
+	
+	public:
     uInt8 myCTRLPF;       // Playfield control register
 	  uInt32 myPF;          // Playfield graphics (19-12:PF2 11-4:PF1 3-0:PF0)
-    uInt8 myPlayfieldPriorityAndScore;
+    uInt8 myPriorityAndScore;
 
     const uInt32* myMask;
 	};
@@ -672,6 +697,8 @@ class TIA : public Device
 		virtual uInt8 getState();
 		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
 		virtual void handleRegisterUpdate(uInt8 addr, uInt8 value);
+
+		uInt8 getEnabled(uInt32 hpos) {return (isEnabled && myMask[hpos]) ? getEnableBit() & myTia.myDisabledObjects : 0;}
 
 		void handleVDEL(uInt8 value);
 
@@ -737,7 +764,8 @@ class TIA : public Device
     uInt8 getCurrentGRP() const {return myCurrentGRP;};
 
 	protected:
-		
+
+
 	private:
 		void handleCurrentGRP();
 
@@ -764,6 +792,9 @@ class TIA : public Device
 
 		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
 		virtual void handleRegisterUpdate(uInt8 addr, uInt8 value);
+
+	protected:
+		uInt8 getEnableBit() {return P0Bit;}
 	};
 
 	class Player1 : public AbstractPlayer
@@ -773,6 +804,9 @@ class TIA : public Device
 
 		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
 		virtual void handleRegisterUpdate(uInt8 addr, uInt8 value);
+
+	protected:
+		uInt8 getEnableBit() {return P1Bit;}
 	};
 
 	class AbstractParticle : public AbstractMoveableTIAObject
@@ -780,6 +814,8 @@ class TIA : public Device
 		// special missile and ball logic in here
 	public:
 		bool myENABLE;        // Indicates if particle is enabled
+
+	protected:
 	};
 	
 	class AbstractMissile : public AbstractParticle 
@@ -790,16 +826,26 @@ class TIA : public Device
 
 	class Missile0 : public AbstractMissile 
 	{
+
+	protected:
+		uInt8 getEnableBit() {return M0Bit;}
+		
 	};
 
 	class Missile1 : public AbstractMissile // maybe aggregate a common player/missile abstract class
 	{
+
+	protected:
+		uInt8 getEnableBit() {return M1Bit;}
 	};
 
 	class Ball : public AbstractParticle // maybe aggregate a common player/missile abstract class
 	{
 		//bool myDENABLE;        // Indicates if the vertically delayed ball is enabled
 		//uInt8 myCTRLPF;       // Playfield control register
+
+	protected:			
+		uInt8 getEnableBit() {return BLBit;}
 	};
 
 	private: 
@@ -812,8 +858,8 @@ class TIA : public Device
 
   public:
     Playfield getPlayfield() {return myPlayfield;}
-    AbstractPlayer getPlayer0() {return myPlayer0;}
-    AbstractPlayer getPlayer1() {return myPlayer1;}
+    Player0 getPlayer0() {return myPlayer0;}
+    Player1 getPlayer1() {return myPlayer1;}
 };
 
 #endif

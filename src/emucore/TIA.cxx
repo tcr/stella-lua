@@ -111,8 +111,7 @@ void TIA::reset()
   myColor[P0Color] = myColor[P1Color] = myColor[PFColor] = myColor[BKColor] = 0;
   myColor[M0Color] = myColor[M1Color] = myColor[BLColor] = myColor[HBLANKColor] = 0;
 
-  myPlayfieldPriorityAndScore = 0;
-  myCTRLPF = 0;
+  //myCTRLPF = 0;
   myPF = 0;
   myENAM0 = myENAM1 = myENABL = myDENABL = false;
   myHMP0 = myHMP1 = myHMM0 = myHMM1 = myHMBL = 0;
@@ -299,8 +298,8 @@ bool TIA::save(Serializer& out) const
 
     out.putIntArray(myColor, 8);
 
-    out.putByte(myCTRLPF);
-    out.putByte(myPlayfieldPriorityAndScore);
+    //out.putByte(myCTRLPF);
+    //out.putByte(myPlayfieldPriorityAndScore);
     //out.putBool(myREFP0);
     //out.putBool(myREFP1);
     out.putInt(myPF);
@@ -408,8 +407,8 @@ bool TIA::load(Serializer& in)
 
     in.getIntArray(myColor, 8);
 
-    myCTRLPF = in.getByte();
-    myPlayfieldPriorityAndScore = in.getByte();
+    //myCTRLPF = in.getByte();
+    //myPlayfieldPriorityAndScore = in.getByte();
     //myREFP0 = in.getBool();
     //myREFP1 = in.getBool();
     myPF = in.getInt();
@@ -993,7 +992,8 @@ void TIA::updateFrame(Int32 clock)
       if(myHMBLmmr) { myPOSBL -= 17;  if(myPOSBL < 0) myPOSBL += 160;  posChanged = true; }
 
       // Scanline change, so reset PF mask based on current CTRLPF reflection state 
-      myPFMask = TIATables::PFMask[myCTRLPF & 0x01];
+			myPFMask = TIATables::PFMask[myPlayfield.getCTRLPF() & 0x01];
+			myPlayfield.newScanline();
 
       // TODO - handle changes to player timing
       if(posChanged)
@@ -1063,7 +1063,7 @@ void TIA::updateFrame(Int32 clock)
         myPlayer1.myMask = &TIATables::PxMask[myPlayer1.getPos() & 0x03]
             [myPlayer1.getSuppress()][myNUSIZ1 & 0x07][160 - (myPlayer1.getPos() & 0xFC)];
         myBLMask = &TIATables::BLMask[myPOSBL & 0x03]
-            [(myCTRLPF & 0x30) >> 4][160 - (myPOSBL & 0xFC)];
+            [(myPlayfield.getCTRLPF() & 0x30) >> 4][160 - (myPOSBL & 0xFC)];
 
         // TODO - 08-27-2009: Simulate the weird effects of Cosmic Ark and
         // Stay Frosty.  The movement itself is well understood, but there
@@ -1127,27 +1127,31 @@ void TIA::updateFrame(Int32 clock)
         uInt32 hpos = clocksFromStartOfScanLine - HBLANK;
         for(; myFramePointer < ending; ++myFramePointer, ++hpos)
         {
-          uInt8 enabled = ((enabledObjects & PFBit) &&
-                           (myPF & myPFMask[hpos])) ? PFBit : 0;
+          /*uInt8 enabled = ((enabledObjects & PFBit) &&
+                           (myPlayfield.getPF() & myPFMask[hpos])) ? PFBit : 0;*/
+					uInt8 enabled = myPlayfield.getEnabled(hpos);
+					//uInt8 enabled = (myPlayfield.getEnabled() && (myPlayfield.getPF() & myPFMask[hpos])) ? PFBit : 0;
 
           if((enabledObjects & BLBit) && myBLMask[hpos])
             enabled |= BLBit;
 
           if((enabledObjects & P1Bit) && (myPlayer1.getCurrentGRP() & myPlayer1.myMask[hpos]))
             enabled |= P1Bit;
+					//enabled |= myPlayer1.getEnabled(hpos);
 
           if((enabledObjects & M1Bit) && myM1Mask[hpos])
             enabled |= M1Bit;
 
-		  if((enabledObjects & P0Bit) && (myPlayer0.getCurrentGRP() & myPlayer0.myMask[hpos]))
+				if((enabledObjects & P0Bit) && (myPlayer0.getCurrentGRP() & myPlayer0.myMask[hpos]))
             enabled |= P0Bit;
+					//enabled |= myPlayer0.getEnabled(hpos);
 
           if((enabledObjects & M0Bit) && myM0Mask[hpos])
             enabled |= M0Bit;
 
           myCollision |= TIATables::CollisionMask[enabled];
           *myFramePointer = myColorPtr[myPriorityEncoder[hpos < 80 ? 0 : 1]
-              [enabled | myPlayfieldPriorityAndScore]];
+						[enabled | myPlayfield.getPriorityAndScore()]];
         }
       }
       myFramePointer = ending;
@@ -1521,18 +1525,13 @@ bool TIA::poke(uInt16 addr, uInt8 value)
 
     case CTRLPF:  // Control Playfield, Ball size, Collisions
     {
-      myCTRLPF = value;
+      //myCTRLPF = value;
       myPlayfield.handleRegisterUpdate(addr, value);
-
-      // The playfield priority and score bits from the control register
-      // are accessed when the frame is being drawn.  We precompute the 
-      // necessary value here so we can save time while drawing.
-      myPlayfieldPriorityAndScore = ((myCTRLPF & 0x06) << 5);
 
       // Update the playfield mask based on reflection state if 
       // we're still on the left hand side of the playfield
       if(((clock - myClockWhenFrameStarted) % 228) < (68 + 79))
-        myPFMask = TIATables::PFMask[myCTRLPF & 0x01];
+        myPFMask = TIATables::PFMask[myPlayfield.getCTRLPF() & 0x01];
 
       break;
     }
@@ -1555,10 +1554,11 @@ bool TIA::poke(uInt16 addr, uInt8 value)
     {
       myPlayfield.handleRegisterUpdate(addr, value);
 
-      if(myPF == 0)
+      if(myPlayfield.getPF() == 0)
         myEnabledObjects &= ~PFBit;
       else
         myEnabledObjects |= PFBit;
+	
 
     #ifdef DEBUGGER_SUPPORT
       uInt16 dataAddr = mySystem->m6502().lastDataAddressForPoke();
@@ -1902,7 +1902,7 @@ bool TIA::poke(uInt16 addr, uInt8 value)
     {
 	    myPlayer0.handleRegisterUpdate(addr, value);
 
-      if(myPlayer0.myCurrentGRP != 0)
+      if(myPlayer0.getCurrentGRP() != 0)
         myEnabledObjects |= P0Bit;
       else
         myEnabledObjects &= ~P0Bit;
@@ -2389,11 +2389,17 @@ void TIA::AbstractTIAObject::handleRegisterUpdate(uInt8 addr, uInt8 value)
 {
 }
 
+void TIA::AbstractTIAObject::handleEnabled(uInt32 value)
+{
+	isEnabled = (value != 0);
+}
+
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TIA::Playfield::Playfield(const TIA& tia) : AbstractTIAObject(tia)
 {
-  myCTRLPF = myPF = 0;
+  myCTRLPF = myPF = myPriorityAndScore = 0;;
 
   myMask = TIATables::PFMask[0];
 }
@@ -2401,32 +2407,41 @@ TIA::Playfield::Playfield(const TIA& tia) : AbstractTIAObject(tia)
 void TIA::Playfield::save(Serializer& out) const
 {
 	AbstractTIAObject::save(out);
+
 	out.putByte(myCTRLPF);
 	out.putInt(myPF);
+	out.putByte(myPriorityAndScore);
 }
 
 void TIA::Playfield::load(Serializer& in)
 {
 	AbstractTIAObject::load(in);
+
   myCTRLPF = in.getByte();
 	myPF = in.getInt();
+	myPriorityAndScore = in.getByte();
 }
 
 void TIA::Playfield::handleRegisterUpdate(uInt8 addr, uInt8 value)
 {
   AbstractTIAObject::handleRegisterUpdate(addr, value);
+
 	switch(addr)
 	{
     case CTRLPF:  // Control Playfield, Ball size, Collisions
-
+			handleCTRLPF(value);
+			break;
     case PF0:     // Playfield register byte 0
       myPF = (myPF & 0x000FFFF0) | ((value >> 4) & 0x0F);
+			handleEnabled(myPF);
       break;
     case PF1:     // Playfield register byte 1
       myPF = (myPF & 0x000FF00F) | ((uInt32)value << 4);
+			handleEnabled(myPF);
       break;
     case PF2:     // Playfield register byte 2
       myPF = (myPF & 0x00000FFF) | ((uInt32)value << 12);
+			handleEnabled(myPF);
     break;
 	}
 }
@@ -2438,12 +2453,18 @@ void TIA::Playfield::handleCTRLPF(uInt8 value)
   // The playfield priority and score bits from the control register
   // are accessed when the frame is being drawn.  We precompute the 
   // necessary value here so we can save time while drawing.
-  myPlayfieldPriorityAndScore = ((myCTRLPF & 0x06) << 5);
+  myPriorityAndScore = ((myCTRLPF & 0x06) << 5);
 
   // Update the playfield mask based on reflection state if 
   // we're still on the left hand side of the playfield
-  /*if(((clock - myClockWhenFrameStarted) % 228) < (68 + 79))
-    myMask = TIATables::PFMask[myCTRLPF & 0x01];*/
+	Int32 clock = myTia.mySystem->cycles() * 3;
+  if(((clock - myTia.myClockWhenFrameStarted) % 228) < (68 + 79))
+    myMask = TIATables::PFMask[myCTRLPF & 0x01];
+}
+
+void TIA::Playfield::newScanline()
+{
+	myMask = TIATables::PFMask[myCTRLPF & 0x01];
 }
 
 
@@ -2459,6 +2480,7 @@ TIA::AbstractMoveableTIAObject::AbstractMoveableTIAObject(const TIA& tia) : Abst
 void TIA::AbstractMoveableTIAObject::save(Serializer& out) const
 {
 	AbstractTIAObject::save(out);
+
 	out.putByte(myHM);
 	out.putBool(myVDEL);
 	out.putShort(myPos);
@@ -2470,6 +2492,7 @@ void TIA::AbstractMoveableTIAObject::save(Serializer& out) const
 void TIA::AbstractMoveableTIAObject::load(Serializer& in)
 {
 	AbstractTIAObject::load(in);
+
 	myHM = in.getByte();
 	myVDEL = in.getBool();
 	myPos = in.getShort();
@@ -2511,8 +2534,6 @@ class TIA::AbstractMoveableTIAObject
 
 TIA::AbstractPlayer::AbstractPlayer(const TIA& tia) : AbstractMoveableTIAObject(tia)
 {
-	AbstractMoveableTIAObject::AbstractMoveableTIAObject(tia);
-
 	myGRP = myDGRP = myNUSIZ = 0;
 	myREFP = false;
 
@@ -2573,6 +2594,7 @@ void TIA::AbstractPlayer::handleGRP(uInt8 value)
   // Set player graphics
 	myGRP = value;
   handleCurrentGRP();
+	handleEnabled(myCurrentGRP);
 }
 
 void TIA::AbstractPlayer::handleDelayedGRP(uInt8 value)
@@ -2580,6 +2602,7 @@ void TIA::AbstractPlayer::handleDelayedGRP(uInt8 value)
   // Copy player graphics into its delayed register
 	myDGRP = myGRP;
 	handleCurrentGRP();
+	handleEnabled(myCurrentGRP);
 }
 
 void TIA::AbstractPlayer::handleREFP(uInt8 value)
@@ -2594,11 +2617,7 @@ void TIA::AbstractPlayer::handleVDEL(uInt8 value)
 	TIA::AbstractMoveableTIAObject::handleVDEL(value);
 
 	handleCurrentGRP();
-
-    /*  if(myPlayer0.myCurrentGRP != 0)
-        myEnabledObjects |= P0Bit;
-      else
-        myEnabledObjects &= ~P0Bit;*/
+	handleEnabled(myCurrentGRP);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2632,7 +2651,6 @@ void TIA::Player0::handleRegisterUpdate(uInt8 addr, uInt8 value)
 
 TIA::Player1::Player1(const TIA& tia) : AbstractPlayer(tia)
 {
-	AbstractPlayer::AbstractPlayer(tia);
 }
 
 void TIA::Player1::handleRegisterUpdate(uInt8 addr, uInt8 value)
