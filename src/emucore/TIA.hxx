@@ -43,6 +43,7 @@ class Sound;
   @author  Bradford W. Mott
   @version $Id$
 */
+
 class TIA : public Device
 {
   public:
@@ -385,7 +386,7 @@ class TIA : public Device
     // Apply motion to registers when HMOVE was previously active
     void applyPreviousHMOVEMotion(int hpos, Int16& pos, uInt8 motion);
 
-  private:
+  public:
     // Console the TIA is associated with
     Console& myConsole;
 
@@ -506,9 +507,10 @@ class TIA : public Device
     // are controlled by 6 objects
     uInt32 myCollisionEnabledMask;
 
+		
     // Note that these position registers contain the color clock 
     // on which the object's serial output should begin (0 to 159)
-    Int16 myPOSP0;        // Player 0 position register
+    //Int16 myPOSP0;        // Player 0 position register
     Int16 myPOSP1;        // Player 1 position register
     Int16 myPOSM0;        // Missle 0 position register
     Int16 myPOSM1;        // Missle 1 position register
@@ -516,7 +518,7 @@ class TIA : public Device
 
     // The color clocks elapsed so far for each of the graphical objects,
     // as denoted by 'MOTCK' line described in A. Towers TIA Hardware Notes
-    Int32 myMotionClockP0;
+    //Int32 myMotionClockP0;
     Int32 myMotionClockP1;
     Int32 myMotionClockM0;
     Int32 myMotionClockM1;
@@ -524,19 +526,19 @@ class TIA : public Device
 
     // Indicates 'start' signal for each of the graphical objects as
     // described in A. Towers TIA Hardware Notes
-    Int32 myStartP0;
+    //Int32 myStartP0;
     Int32 myStartP1;
     Int32 myStartM0;
     Int32 myStartM1;
 
     // Index into the player mask arrays indicating whether display
     // of the first copy should be suppressed
-    uInt8 mySuppressP0;
+    //uInt8 mySuppressP0;
     uInt8 mySuppressP1;
 
     // Latches for 'more motion required' as described in A. Towers TIA
     // Hardware Notes
-    bool myHMP0mmr;
+    //bool myHMP0mmr;
     bool myHMP1mmr;
     bool myHMM0mmr;
     bool myHMM1mmr;
@@ -544,7 +546,7 @@ class TIA : public Device
 
     // Graphics for Player 0 that should be displayed.  This will be
     // reflected if the player is being reflected.
-    uInt8 myCurrentGRP0;
+    //uInt8 myCurrentGRP0;
 
     // Graphics for Player 1 that should be displayed.  This will be
     // reflected if the player is being reflected.
@@ -553,7 +555,7 @@ class TIA : public Device
     // It's VERY important that the BL, M0, M1, P0 and P1 current
     // mask pointers are always on a uInt32 boundary.  Otherwise,
     // the TIA code will fail on a good number of CPUs.
-    const uInt8* myP0Mask;
+    //const uInt8* myP0Mask;
     const uInt8* myM0Mask;
     const uInt8* myM1Mask;
     const uInt8* myP1Mask;
@@ -621,6 +623,173 @@ class TIA : public Device
 
     // Assignment operator isn't supported by this class so make it private
     TIA& operator = (const TIA&);
+
+
+
+
+	class AbstractTIAObject 
+	{
+	public:
+		AbstractTIAObject(const TIA& tia);
+
+		virtual void save(Serializer& out) const;
+		virtual void load(Serializer& in);
+
+		// Triggers an update of the object until the current clock, returns true if the current pixel is enabled (TODO: color, priorities).
+		virtual uInt8 getState();
+		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
+		virtual void handleRegisterUpdate(uInt8 addr, uInt8 value);
+
+		const TIA& myTia;
+	};
+
+	class AbstractMoveableTIAObject : public AbstractTIAObject
+	{
+	public :
+		AbstractMoveableTIAObject(const TIA& tia);
+
+		virtual void save(Serializer& out) const;
+		virtual void load(Serializer& in);
+
+		// Triggers an update of the object until the current clock, returns true if the current pixel is enabled (TODO: color, priorities).
+		virtual uInt8 getState();
+		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
+		virtual void handleRegisterUpdate(uInt8 addr, uInt8 value);
+
+		void handleVDEL(uInt8 value);
+
+		Int16 getPos() const;
+		//void setPos(Int16);
+
+		Int32 getMotionClock() const;
+		//void setMotionClock(Int32);
+
+		Int32 getStart() const;
+		//void setStart(Int32);
+
+		bool isHMmmr() const;
+		//void setHMmmr(bool);
+
+	  public : // for now
+		uInt8 myHM;			// horizontal motion register
+		bool myVDEL;		// Indicates if object is being vertically delayed (not used for missiles)
+
+	    // Note that these position registers contain the color clock 
+		// on which the object's serial output should begin (0 to 159)
+		Int16 myPos; 
+
+	    // The color clocks elapsed so far for each of the graphical objects,
+		// as denoted by 'MOTCK' line described in A. Towers TIA Hardware Notes
+		Int32 myMotionClock;
+
+		// Indicates 'start' signal for each of the graphical objects as
+		// described in A. Towers TIA Hardware Notes
+		Int32 myStart;
+
+		// Latches for 'more motion required' as described in A. Towers TIA
+		// Hardware Notes
+		bool myHMmmr;
+
+	    // It's VERY important that the BL, M0, M1, P0 and P1 current
+		// mask pointers are always on a uInt32 boundary.  Otherwise,
+		// the TIA code will fail on a good number of CPUs.
+		const uInt8* myMask;
+	};
+
+	// special player logic in here
+	class AbstractPlayer : public AbstractMoveableTIAObject
+	{
+	public:		
+		AbstractPlayer(const TIA& tia);
+
+		virtual void save(Serializer& out) const;
+		virtual void load(Serializer& in);
+
+		// Triggers an update of the object until the current clock, returns true if the current pixel is enabled (TODO: color, priorities).
+		virtual uInt8 getState();
+		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
+		virtual void handleRegisterUpdate(uInt8 addr, uInt8 value);
+		
+		void handleGRP(uInt8 value);
+		void handleOtherGRP(uInt8 value);
+		void handleREFP(uInt8 value);
+
+		uInt8 getSuppress() const;
+		uInt8 getCurrentGRP() const;
+
+	private:
+		void handleCurrentGRP();
+
+	public : // for now
+		uInt8 myGRP;        // Player graphics register
+		uInt8 myNUSIZ;      // Number and size of player and missle 0
+		bool myREFP;		// Indicates if player is being reflected
+
+		// Index into the player mask arrays indicating whether display
+		// of the first copy should be suppressed
+		uInt8 mySuppress;
+
+		uInt8 myDGRP;       // Player delayed graphics register
+		// Graphics for Player that should be displayed.  This will be
+		// reflected if the player is being reflected.
+		uInt8 myCurrentGRP;
+		
+	};
+
+	class Player0 : public AbstractPlayer
+	{
+	public:
+		Player0(const TIA& tia);
+
+		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
+		virtual void handleRegisterUpdate(uInt8 addr, uInt8 value);
+	};
+
+	class Player1 : public AbstractPlayer
+	{
+	public:
+		Player1(const TIA& tia);
+	};
+
+	class AbstractParticle : public AbstractMoveableTIAObject
+	{
+		// special missile and ball logic in here
+	public:
+		bool myENABLE;        // Indicates if particle is enabled
+	};
+	
+	class AbstractMissile : public AbstractParticle 
+	{
+		//bool myRESMP;        // Indicates if missle is reset to player 
+		// uInt8 myNUSIZ;       // Number and size of missle
+	};
+
+	class Missile0 : public AbstractMissile 
+	{
+	};
+
+	class Missile1 : public AbstractMissile // maybe aggregate a common player/missile abstract class
+	{
+	};
+
+	class Ball : public AbstractParticle // maybe aggregate a common player/missile abstract class
+	{
+		//bool myDENABLE;        // Indicates if the vertically delayed ball is enabled
+		//uInt8 myCTRLPF;       // Playfield control register
+	};
+
+	class Playfield : public AbstractTIAObject
+	{
+	//uInt32 myPF;          // Playfield graphics (19-12:PF2 11-4:PF1 3-0:PF0)
+	};
+
+	public: // for now
+		Player0 myPlayer0;
+		Player1 myPlayer1;
+		//Missile0 myMissile0;
+		//Missile1 myMissile1;
+		//Ball myBall;
+		//Playfield myPlayfield;
 };
 
 #endif

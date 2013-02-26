@@ -547,9 +547,9 @@ uInt8 TIADebug::grP1(int newVal)
 uInt8 TIADebug::posP0(int newVal)
 {
   if(newVal > -1)
-    myTIA.myPOSP0 = newVal;
+	  myTIA.myPlayer0.myPos = newVal;
 
-  return myTIA.myPOSP0;
+  return myTIA.myPlayer0.getPos();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

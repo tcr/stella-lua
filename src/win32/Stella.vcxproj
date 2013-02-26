@@ -92,8 +92,8 @@
     <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\stephen\Source\sdl\lib64;$(LibraryPath)</LibraryPath>
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">C:\Users\stephen\Source\sdl\include;$(IncludePath)</IncludePath>
     <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">C:\Users\stephen\Source\sdl\lib32;$(LibraryPath)</LibraryPath>
-    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">C:\Users\stephen\Source\sdl\include;$(IncludePath)</IncludePath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">C:\Users\stephen\Source\sdl\lib32;$(LibraryPath)</LibraryPath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">c:\Users\jentzsch\Documents\_privat\Atari\emu\Stella\src\src\sdl\include;$(IncludePath)</IncludePath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">c:\Users\jentzsch\Documents\_privat\Atari\emu\Stella\src\src\sdl\lib32;$(LibraryPath)</LibraryPath>
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\stephen\Source\sdl\include;$(IncludePath)</IncludePath>
     <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\stephen\Source\sdl\lib64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
