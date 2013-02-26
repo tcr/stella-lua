@@ -67,7 +67,8 @@ TIA::TIA(Console& console, Sound& sound, Settings& settings)
     myBitsEnabled(true),
     myCollisionsEnabled(true),
 	myPlayer0(*this),
-	myPlayer1(*this)
+	myPlayer1(*this),
+  myPlayfield(*this)
 {
   // Allocate buffers for two frame buffers
   myCurrentFrameBuffer = new uInt8[160 * 320];
@@ -362,9 +363,10 @@ bool TIA::save(Serializer& out) const
     out.putInt(myFrameCounter);
     out.putInt(myPALFrameCounter);
 
-	// save the TIA objects
-	myPlayer0.save(out);
-	myPlayer1.save(out);
+	  // save the TIA objects
+	  myPlayer0.save(out);
+	  myPlayer1.save(out);
+    myPlayfield.save(out);
 
     // Save the sound sample stuff ...
     mySound.save(out);
@@ -473,6 +475,7 @@ bool TIA::load(Serializer& in)
 	  // load the TIA objects
 	  myPlayer0.load(in);
 	  myPlayer1.load(in);
+    myPlayfield.load(in);
 
     // Load the sound sample stuff ...
     mySound.load(in);
@@ -1519,6 +1522,7 @@ bool TIA::poke(uInt16 addr, uInt8 value)
     case CTRLPF:  // Control Playfield, Ball size, Collisions
     {
       myCTRLPF = value;
+      myPlayfield.handleRegisterUpdate(addr, value);
 
       // The playfield priority and score bits from the control register
       // are accessed when the frame is being drawn.  We precompute the 
@@ -1546,42 +1550,10 @@ bool TIA::poke(uInt16 addr, uInt8 value)
     }
 
     case PF0:     // Playfield register byte 0
-    {
-      myPF = (myPF & 0x000FFFF0) | ((value >> 4) & 0x0F);
-
-      if(myPF == 0)
-        myEnabledObjects &= ~PFBit;
-      else
-        myEnabledObjects |= PFBit;
-
-    #ifdef DEBUGGER_SUPPORT
-      uInt16 dataAddr = mySystem->m6502().lastDataAddressForPoke();
-      if(dataAddr)
-        mySystem->setAccessFlags(dataAddr, CartDebug::PGFX);
-    #endif
-      break;
-    }
-
     case PF1:     // Playfield register byte 1
-    {
-      myPF = (myPF & 0x000FF00F) | ((uInt32)value << 4);
-
-      if(myPF == 0)
-        myEnabledObjects &= ~PFBit;
-      else
-        myEnabledObjects |= PFBit;
-
-    #ifdef DEBUGGER_SUPPORT
-      uInt16 dataAddr = mySystem->m6502().lastDataAddressForPoke();
-      if(dataAddr)
-        mySystem->setAccessFlags(dataAddr, CartDebug::PGFX);
-    #endif
-      break;
-    }
-
     case PF2:     // Playfield register byte 2
     {
-      myPF = (myPF & 0x00000FFF) | ((uInt32)value << 12);
+      myPlayfield.handleRegisterUpdate(addr, value);
 
       if(myPF == 0)
         myEnabledObjects &= ~PFBit;
@@ -2374,7 +2346,8 @@ TIA::TIA(const TIA& c)
     mySound(c.mySound),
     mySettings(c.mySettings),
 	myPlayer0(c),
-	myPlayer1(c)
+	myPlayer1(c),
+  myPlayfield(c)
 {
   assert(false);
 }
@@ -2415,6 +2388,65 @@ uInt8 TIA::AbstractTIAObject::getState()
 void TIA::AbstractTIAObject::handleRegisterUpdate(uInt8 addr, uInt8 value)
 {
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+TIA::Playfield::Playfield(const TIA& tia) : AbstractTIAObject(tia)
+{
+  myCTRLPF = myPF = 0;
+
+  myMask = TIATables::PFMask[0];
+}
+
+void TIA::Playfield::save(Serializer& out) const
+{
+	AbstractTIAObject::save(out);
+	out.putByte(myCTRLPF);
+	out.putInt(myPF);
+}
+
+void TIA::Playfield::load(Serializer& in)
+{
+	AbstractTIAObject::load(in);
+  myCTRLPF = in.getByte();
+	myPF = in.getInt();
+}
+
+void TIA::Playfield::handleRegisterUpdate(uInt8 addr, uInt8 value)
+{
+  AbstractTIAObject::handleRegisterUpdate(addr, value);
+	switch(addr)
+	{
+    case CTRLPF:  // Control Playfield, Ball size, Collisions
+
+    case PF0:     // Playfield register byte 0
+      myPF = (myPF & 0x000FFFF0) | ((value >> 4) & 0x0F);
+      break;
+    case PF1:     // Playfield register byte 1
+      myPF = (myPF & 0x000FF00F) | ((uInt32)value << 4);
+      break;
+    case PF2:     // Playfield register byte 2
+      myPF = (myPF & 0x00000FFF) | ((uInt32)value << 12);
+    break;
+	}
+}
+
+void TIA::Playfield::handleCTRLPF(uInt8 value)
+{
+  myCTRLPF = value;
+
+  // The playfield priority and score bits from the control register
+  // are accessed when the frame is being drawn.  We precompute the 
+  // necessary value here so we can save time while drawing.
+  myPlayfieldPriorityAndScore = ((myCTRLPF & 0x06) << 5);
+
+  // Update the playfield mask based on reflection state if 
+  // we're still on the left hand side of the playfield
+  /*if(((clock - myClockWhenFrameStarted) % 228) < (68 + 79))
+    myMask = TIATables::PFMask[myCTRLPF & 0x01];*/
+}
+
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -640,6 +640,26 @@ class TIA : public Device
 		const TIA& myTia;
 	};
 
+	class Playfield : public AbstractTIAObject
+	{
+	public:
+		Playfield(const TIA& tia);
+
+		virtual void save(Serializer& out) const;
+		virtual void load(Serializer& in);
+
+		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
+		virtual void handleRegisterUpdate(uInt8 addr, uInt8 value);
+
+    virtual void handleCTRLPF(uInt8 value);
+
+    uInt8 myCTRLPF;       // Playfield control register
+	  uInt32 myPF;          // Playfield graphics (19-12:PF2 11-4:PF1 3-0:PF0)
+    uInt8 myPlayfieldPriorityAndScore;
+
+    const uInt32* myMask;
+	};
+
 	class AbstractMoveableTIAObject : public AbstractTIAObject
 	{
 	public :
@@ -683,7 +703,7 @@ class TIA : public Device
 		// Hardware Notes
 		bool myHMmmr;
 
-	    // It's VERY important that the BL, M0, M1, P0 and P1 current
+	  // It's VERY important that the BL, M0, M1, P0 and P1 current
 		// mask pointers are always on a uInt32 boundary.  Otherwise,
 		// the TIA code will fail on a good number of CPUs.
 		const uInt8* myMask;
@@ -782,20 +802,16 @@ class TIA : public Device
 		//uInt8 myCTRLPF;       // Playfield control register
 	};
 
-	class Playfield : public AbstractTIAObject
-	{
-	//uInt32 myPF;          // Playfield graphics (19-12:PF2 11-4:PF1 3-0:PF0)
-	};
-
 	private: 
 		Player0 myPlayer0;
 		Player1 myPlayer1;
 		//Missile0 myMissile0;
 		//Missile1 myMissile1;
 		//Ball myBall;
-		//Playfield myPlayfield;
+		Playfield myPlayfield;
 
   public:
+    Playfield getPlayfield() {return myPlayfield;}
     AbstractPlayer getPlayer0() {return myPlayer0;}
     AbstractPlayer getPlayer1() {return myPlayer1;}
 };
