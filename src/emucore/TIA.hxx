@@ -466,16 +466,16 @@ class TIA : public Device
 
     uInt8 myCTRLPF;       // Playfield control register
 
-    bool myREFP0;         // Indicates if player 0 is being reflected
-    bool myREFP1;         // Indicates if player 1 is being reflected
+    //bool myREFP0;         // Indicates if player 0 is being reflected
+    //bool myREFP1;         // Indicates if player 1 is being reflected
 
     uInt32 myPF;          // Playfield graphics (19-12:PF2 11-4:PF1 3-0:PF0)
 
-    uInt8 myGRP0;         // Player 0 graphics register
-    uInt8 myGRP1;         // Player 1 graphics register
+    //uInt8 myGRP0;         // Player 0 graphics register
+    //uInt8 myGRP1;         // Player 1 graphics register
     
-    uInt8 myDGRP0;        // Player 0 delayed graphics register
-    uInt8 myDGRP1;        // Player 1 delayed graphics register
+    //uInt8 myDGRP0;        // Player 0 delayed graphics register
+    //uInt8 myDGRP1;        // Player 1 delayed graphics register
 
     bool myENAM0;         // Indicates if missle 0 is enabled
     bool myENAM1;         // Indicates if missle 1 is enabled
@@ -489,8 +489,8 @@ class TIA : public Device
     uInt8 myHMM1;         // Missle 1 horizontal motion register
     uInt8 myHMBL;         // Ball horizontal motion register
 
-    bool myVDELP0;        // Indicates if player 0 is being vertically delayed
-    bool myVDELP1;        // Indicates if player 1 is being vertically delayed
+    //bool myVDELP0;        // Indicates if player 0 is being vertically delayed
+    //bool myVDELP1;        // Indicates if player 1 is being vertically delayed
     bool myVDELBL;        // Indicates if the ball is being vertically delayed
 
     bool myRESMP0;        // Indicates if missle 0 is reset to player 0
@@ -511,7 +511,7 @@ class TIA : public Device
     // Note that these position registers contain the color clock 
     // on which the object's serial output should begin (0 to 159)
     //Int16 myPOSP0;        // Player 0 position register
-    Int16 myPOSP1;        // Player 1 position register
+    //Int16 myPOSP1;        // Player 1 position register
     Int16 myPOSM0;        // Missle 0 position register
     Int16 myPOSM1;        // Missle 1 position register
     Int16 myPOSBL;        // Ball position register
@@ -519,7 +519,7 @@ class TIA : public Device
     // The color clocks elapsed so far for each of the graphical objects,
     // as denoted by 'MOTCK' line described in A. Towers TIA Hardware Notes
     //Int32 myMotionClockP0;
-    Int32 myMotionClockP1;
+    //Int32 myMotionClockP1;
     Int32 myMotionClockM0;
     Int32 myMotionClockM1;
     Int32 myMotionClockBL;
@@ -527,19 +527,19 @@ class TIA : public Device
     // Indicates 'start' signal for each of the graphical objects as
     // described in A. Towers TIA Hardware Notes
     //Int32 myStartP0;
-    Int32 myStartP1;
+    //Int32 myStartP1;
     Int32 myStartM0;
     Int32 myStartM1;
 
     // Index into the player mask arrays indicating whether display
     // of the first copy should be suppressed
     //uInt8 mySuppressP0;
-    uInt8 mySuppressP1;
+    //uInt8 mySuppressP1;
 
     // Latches for 'more motion required' as described in A. Towers TIA
     // Hardware Notes
     //bool myHMP0mmr;
-    bool myHMP1mmr;
+    //bool myHMP1mmr;
     bool myHMM0mmr;
     bool myHMM1mmr;
     bool myHMBLmmr;
@@ -550,7 +550,7 @@ class TIA : public Device
 
     // Graphics for Player 1 that should be displayed.  This will be
     // reflected if the player is being reflected.
-    uInt8 myCurrentGRP1;
+    //uInt8 myCurrentGRP1;
 
     // It's VERY important that the BL, M0, M1, P0 and P1 current
     // mask pointers are always on a uInt32 boundary.  Otherwise,
@@ -558,7 +558,7 @@ class TIA : public Device
     //const uInt8* myP0Mask;
     const uInt8* myM0Mask;
     const uInt8* myM1Mask;
-    const uInt8* myP1Mask;
+    //const uInt8* myP1Mask;
     const uInt8* myBLMask;
     const uInt32* myPFMask;
 
@@ -624,9 +624,6 @@ class TIA : public Device
     // Assignment operator isn't supported by this class so make it private
     TIA& operator = (const TIA&);
 
-
-
-
 	class AbstractTIAObject 
 	{
 	public:
@@ -658,19 +655,15 @@ class TIA : public Device
 
 		void handleVDEL(uInt8 value);
 
-		Int16 getPos() const;
-		//void setPos(Int16);
+    // getter:
+    uInt8 getHM() const {return myHM;}
+    bool isVDEL() const {return myVDEL;}
+    Int16 getPos() const {return myPos;};
+    Int32 getMotionClock() const {return myMotionClock;};
+    Int32 getStart() const {return myStart;};
+		bool isHMmmr() const {return myHMmmr;};
 
-		Int32 getMotionClock() const;
-		//void setMotionClock(Int32);
-
-		Int32 getStart() const;
-		//void setStart(Int32);
-
-		bool isHMmmr() const;
-		//void setHMmmr(bool);
-
-	  public : // for now
+	public : // for now
 		uInt8 myHM;			// horizontal motion register
 		bool myVDEL;		// Indicates if object is being vertically delayed (not used for missiles)
 
@@ -710,13 +703,21 @@ class TIA : public Device
 		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
 		virtual void handleRegisterUpdate(uInt8 addr, uInt8 value);
 		
+		// TODO: optization: only react if new value different from old one
 		void handleGRP(uInt8 value);
-		void handleOtherGRP(uInt8 value);
+		void handleDelayedGRP(uInt8 value);
 		void handleREFP(uInt8 value);
+		void handleVDEL(uInt8 value);
 
-		uInt8 getSuppress() const;
-		uInt8 getCurrentGRP() const;
+    // getter
+    uInt8 getGRP() const {return myGRP;};
+    uInt8 getNUSIZ() const {return myNUSIZ;};
+    bool isREFP() const {return myREFP;};
+    uInt8 getSuppress() const {return mySuppress;};
+    uInt8 getCurrentGRP() const {return myCurrentGRP;};
 
+	protected:
+		
 	private:
 		void handleCurrentGRP();
 
@@ -749,6 +750,9 @@ class TIA : public Device
 	{
 	public:
 		Player1(const TIA& tia);
+
+		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
+		virtual void handleRegisterUpdate(uInt8 addr, uInt8 value);
 	};
 
 	class AbstractParticle : public AbstractMoveableTIAObject
@@ -783,13 +787,17 @@ class TIA : public Device
 	//uInt32 myPF;          // Playfield graphics (19-12:PF2 11-4:PF1 3-0:PF0)
 	};
 
-	public: // for now
+	private: 
 		Player0 myPlayer0;
 		Player1 myPlayer1;
 		//Missile0 myMissile0;
 		//Missile1 myMissile1;
 		//Ball myBall;
 		//Playfield myPlayfield;
+
+  public:
+    AbstractPlayer getPlayer0() {return myPlayer0;}
+    AbstractPlayer getPlayer1() {return myPlayer1;}
 };
 
 #endif

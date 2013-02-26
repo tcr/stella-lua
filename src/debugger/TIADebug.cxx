@@ -190,7 +190,7 @@ bool TIADebug::vdelP0(int newVal)
   if(newVal > -1)
     mySystem.poke(VDELP0, ((bool)newVal));
 
-  return myTIA.myVDELP0;
+  return myTIA.myPlayer0.isVDEL();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -199,7 +199,7 @@ bool TIADebug::vdelP1(int newVal)
   if(newVal > -1)
     mySystem.poke(VDELP1, ((bool)newVal));
 
-  return myTIA.myVDELP1;
+  return myTIA.myPlayer1.isVDEL();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -262,7 +262,7 @@ bool TIADebug::refP0(int newVal)
   if(newVal > -1)
     mySystem.poke(REFP0, ((bool)newVal) << 3);
 
-  return myTIA.myREFP0;
+  return myTIA.myPlayer0.isREFP();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -271,7 +271,7 @@ bool TIADebug::refP1(int newVal)
   if(newVal > -1)
     mySystem.poke(REFP1, ((bool)newVal) << 3);
 
-  return myTIA.myREFP1;
+  return myTIA.myPlayer1.isREFP();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -531,7 +531,7 @@ uInt8 TIADebug::grP0(int newVal)
   if(newVal > -1)
     mySystem.poke(GRP0, newVal);
 
-  return myTIA.myGRP0;
+  return myTIA.myPlayer0.getGRP();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -540,7 +540,7 @@ uInt8 TIADebug::grP1(int newVal)
   if(newVal > -1)
     mySystem.poke(GRP1, newVal);
 
-  return myTIA.myGRP1;
+  return myTIA.myPlayer1.getGRP();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -556,9 +556,9 @@ uInt8 TIADebug::posP0(int newVal)
 uInt8 TIADebug::posP1(int newVal)
 {
   if(newVal > -1)
-    myTIA.myPOSP1 = newVal;
+    myTIA.myPlayer1.myPos = newVal;
 
-  return myTIA.myPOSP1;
+  return myTIA.myPlayer1.getPos();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
