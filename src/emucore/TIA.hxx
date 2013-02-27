@@ -469,7 +469,7 @@ class TIA : public Device
     //bool myREFP0;         // Indicates if player 0 is being reflected
     //bool myREFP1;         // Indicates if player 1 is being reflected
 
-    uInt32 myPF;          // Playfield graphics (19-12:PF2 11-4:PF1 3-0:PF0)
+    //uInt32 myPF;          // Playfield graphics (19-12:PF2 11-4:PF1 3-0:PF0)
 
     //uInt8 myGRP0;         // Player 0 graphics register
     //uInt8 myGRP1;         // Player 1 graphics register
@@ -477,11 +477,11 @@ class TIA : public Device
     //uInt8 myDGRP0;        // Player 0 delayed graphics register
     //uInt8 myDGRP1;        // Player 1 delayed graphics register
 
-    bool myENAM0;         // Indicates if missle 0 is enabled
-    bool myENAM1;         // Indicates if missle 1 is enabled
+    //bool myENAM0;         // Indicates if missle 0 is enabled
+    //bool myENAM1;         // Indicates if missle 1 is enabled
 
-    bool myENABL;         // Indicates if the ball is enabled
-    bool myDENABL;        // Indicates if the vertically delayed ball is enabled
+    //bool myENABL;         // Indicates if the ball is enabled
+    //bool myDENABL;        // Indicates if the vertically delayed ball is enabled
 
     uInt8 myHMP0;         // Player 0 horizontal motion register
     uInt8 myHMP1;         // Player 1 horizontal motion register
@@ -491,7 +491,7 @@ class TIA : public Device
 
     //bool myVDELP0;        // Indicates if player 0 is being vertically delayed
     //bool myVDELP1;        // Indicates if player 1 is being vertically delayed
-    bool myVDELBL;        // Indicates if the ball is being vertically delayed
+    //bool myVDELBL;        // Indicates if the ball is being vertically delayed
 
     bool myRESMP0;        // Indicates if missle 0 is reset to player 0
     bool myRESMP1;        // Indicates if missle 1 is reset to player 1
@@ -514,7 +514,7 @@ class TIA : public Device
     //Int16 myPOSP1;        // Player 1 position register
     Int16 myPOSM0;        // Missle 0 position register
     Int16 myPOSM1;        // Missle 1 position register
-    Int16 myPOSBL;        // Ball position register
+    //Int16 myPOSBL;        // Ball position register
 
     // The color clocks elapsed so far for each of the graphical objects,
     // as denoted by 'MOTCK' line described in A. Towers TIA Hardware Notes
@@ -522,7 +522,7 @@ class TIA : public Device
     //Int32 myMotionClockP1;
     Int32 myMotionClockM0;
     Int32 myMotionClockM1;
-    Int32 myMotionClockBL;
+    //Int32 myMotionClockBL;
 
     // Indicates 'start' signal for each of the graphical objects as
     // described in A. Towers TIA Hardware Notes
@@ -559,8 +559,8 @@ class TIA : public Device
     const uInt8* myM0Mask;
     const uInt8* myM1Mask;
     //const uInt8* myP1Mask;
-    const uInt8* myBLMask;
-    const uInt32* myPFMask;
+    //const uInt8* myBLMask;
+    //const uInt32* myPFMask;
 
     // Audio values; only used by TIADebug
     uInt8 myAUDV0, myAUDV1, myAUDC0, myAUDC1, myAUDF0, myAUDF1;
@@ -635,18 +635,19 @@ class TIA : public Device
 	public:
 		AbstractTIAObject(const TIA& tia);
 
+    virtual void reset() = 0;
 		virtual void save(Serializer& out) const;
 		virtual void load(Serializer& in);
-
+    
 		// Triggers an update of the object until the current clock, returns true if the current pixel is enabled (TODO: color, priorities).
 		virtual uInt8 getState();
 		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
 		virtual void handleRegisterUpdate(uInt8 addr, uInt8 value);
 
-		void handleEnabled(uInt32 value);
-
 	protected:
+    void handleEnabled(uInt32 value);
 		virtual uInt8 getEnableBit() = 0;
+    
 		const TIA& myTia;
 		bool isEnabled;
 	};
@@ -656,13 +657,12 @@ class TIA : public Device
 	public:
 		Playfield(const TIA& tia);
 
-		virtual void save(Serializer& out) const;
-		virtual void load(Serializer& in);
+    void reset();
+		void save(Serializer& out) const;
+		void load(Serializer& in);
 
 		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
 		virtual void handleRegisterUpdate(uInt8 addr, uInt8 value);
-
-    virtual void handleCTRLPF(uInt8 value);
 
 		// getter:
 		uInt8 getCTRLPF() {return myCTRLPF;}
@@ -671,9 +671,10 @@ class TIA : public Device
 		uInt8 getEnabled(uInt32 hpos) {
 			return (isEnabled && (getMaskValue() & myMask[hpos])) ? getEnableBit() & myTia.myDisabledObjects : 0;
 		}
-		void newScanline();
+		//void newScanline();
 
 	protected:
+    void handleCTRLPF(uInt8 value);
 		uInt32 getMaskValue() {return myPF;}
 		uInt8 getEnableBit() {return PFBit;}
 	
@@ -690,18 +691,19 @@ class TIA : public Device
 	public :
 		AbstractMoveableTIAObject(const TIA& tia);
 
-		virtual void save(Serializer& out) const;
-		virtual void load(Serializer& in);
+    void reset();
+		void save(Serializer& out) const;
+		void load(Serializer& in);
 
 		// Triggers an update of the object until the current clock, returns true if the current pixel is enabled (TODO: color, priorities).
 		virtual uInt8 getState();
 		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
 		virtual void handleRegisterUpdate(uInt8 addr, uInt8 value);
 
-		uInt8 getEnabled(uInt32 hpos) {return (isEnabled && myMask[hpos]) ? getEnableBit() & myTia.myDisabledObjects : 0;}
-
-		void handleVDEL(uInt8 value);
-
+		uInt8 getEnabled(uInt32 hpos) {
+      return (isEnabled && myMask[hpos]) ? getEnableBit() & myTia.myDisabledObjects : 0;
+    }
+		
     // getter:
     uInt8 getHM() const {return myHM;}
     bool isVDEL() const {return myVDEL;}
@@ -709,6 +711,9 @@ class TIA : public Device
     Int32 getMotionClock() const {return myMotionClock;};
     Int32 getStart() const {return myStart;};
 		bool isHMmmr() const {return myHMmmr;};
+
+  protected:
+    void handleVDEL(uInt8 value);
 
 	public : // for now
 		uInt8 myHM;			// horizontal motion register
@@ -742,19 +747,14 @@ class TIA : public Device
 	public:		
 		AbstractPlayer(const TIA& tia);
 
-		virtual void save(Serializer& out) const;
-		virtual void load(Serializer& in);
+    void reset();
+		void save(Serializer& out) const;
+		void load(Serializer& in);
 
 		// Triggers an update of the object until the current clock, returns true if the current pixel is enabled (TODO: color, priorities).
 		virtual uInt8 getState();
 		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
-		virtual void handleRegisterUpdate(uInt8 addr, uInt8 value);
-		
-		// TODO: optization: only react if new value different from old one
-		void handleGRP(uInt8 value);
-		void handleDelayedGRP(uInt8 value);
-		void handleREFP(uInt8 value);
-		void handleVDEL(uInt8 value);
+		void handleRegisterUpdate(uInt8 addr, uInt8 value);
 
     // getter
     uInt8 getGRP() const {return myGRP;};
@@ -764,7 +764,11 @@ class TIA : public Device
     uInt8 getCurrentGRP() const {return myCurrentGRP;};
 
 	protected:
-
+		// TODO: optization: only react if new value different from old one
+		void handleGRP(uInt8 value);
+		void handleDelayedGRP(uInt8 value);
+		void handleREFP(uInt8 value);
+		void handleVDEL(uInt8 value);
 
 	private:
 		void handleCurrentGRP();
@@ -791,7 +795,7 @@ class TIA : public Device
 		Player0(const TIA& tia);
 
 		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
-		virtual void handleRegisterUpdate(uInt8 addr, uInt8 value);
+		void handleRegisterUpdate(uInt8 addr, uInt8 value);
 
 	protected:
 		uInt8 getEnableBit() {return P0Bit;}
@@ -803,7 +807,7 @@ class TIA : public Device
 		Player1(const TIA& tia);
 
 		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
-		virtual void handleRegisterUpdate(uInt8 addr, uInt8 value);
+		void handleRegisterUpdate(uInt8 addr, uInt8 value);
 
 	protected:
 		uInt8 getEnableBit() {return P1Bit;}
@@ -813,53 +817,130 @@ class TIA : public Device
 	{
 		// special missile and ball logic in here
 	public:
-		bool myENABLE;        // Indicates if particle is enabled
+		AbstractParticle(const TIA& tia);
+
+    void reset();
+		void save(Serializer& out) const;
+		void load(Serializer& in);
+
+		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
+		void handleRegisterUpdate(uInt8 addr, uInt8 value);
+
+	  // getters:
+		bool isENABLE() {return myENABLE;}
 
 	protected:
+    void handleEnable(uInt8 value);
+
+  public:
+    bool myENABLE;        // Indicates if particle is enabled
 	};
 	
 	class AbstractMissile : public AbstractParticle 
 	{
-		//bool myRESMP;        // Indicates if missle is reset to player 
-		// uInt8 myNUSIZ;       // Number and size of missle
+  public:
+		AbstractMissile(const TIA& tia);
+
+    void reset();
+		void save(Serializer& out) const;
+		void load(Serializer& in);
+
+		// Triggers an update of the object until the current clock, returns true if the current pixel is enabled (TODO: color, priorities).
+		virtual uInt8 getState();
+		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
+		void handleRegisterUpdate(uInt8 addr, uInt8 value);
+  protected:
+    void handleRESMP(uInt8 value);
+    virtual AbstractPlayer& getMyPlayer() = 0;
+
+  public:      
+		uInt8 myNUSIZ;       // Number and size of missle
+    bool myRESMP;        // Indicates if missle is reset to player 
 	};
 
 	class Missile0 : public AbstractMissile 
 	{
+  public:
+		Missile0(const TIA& tia);
+
+    /*void reset();
+		void save(Serializer& out) const;
+		void load(Serializer& in);*/
+
+		// Triggers an update of the object until the current clock, returns true if the current pixel is enabled (TODO: color, priorities).
+		//virtual uInt8 getState();
+		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
+		void handleRegisterUpdate(uInt8 addr, uInt8 value);
 
 	protected:
-		uInt8 getEnableBit() {return M0Bit;}
-		
+		uInt8 getEnableBit() {return M0Bit;}		
+    AbstractPlayer& getMyPlayer() {return myTia.getPlayer0();}
 	};
 
 	class Missile1 : public AbstractMissile // maybe aggregate a common player/missile abstract class
 	{
+  public: 
+		Missile1(const TIA& tia);
+
+    /*void reset();
+		void save(Serializer& out) const;
+		void load(Serializer& in);*/
+
+		// Triggers an update of the object until the current clock, returns true if the current pixel is enabled (TODO: color, priorities).
+		//virtual uInt8 getState();
+		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
+		void handleRegisterUpdate(uInt8 addr, uInt8 value);
 
 	protected:
 		uInt8 getEnableBit() {return M1Bit;}
+    AbstractPlayer& getMyPlayer() {return myTia.getPlayer1();}
 	};
 
 	class Ball : public AbstractParticle // maybe aggregate a common player/missile abstract class
 	{
-		//bool myDENABLE;        // Indicates if the vertically delayed ball is enabled
-		//uInt8 myCTRLPF;       // Playfield control register
+  public:
+		Ball(const TIA& tia);
+
+    void reset();
+		void save(Serializer& out) const;
+		void load(Serializer& in);
+
+		// Triggers an update of the object until the current clock, returns true if the current pixel is enabled (TODO: color, priorities).
+		virtual uInt8 getState();
+		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
+		void handleRegisterUpdate(uInt8 addr, uInt8 value);
+
+		// getter:
+		uInt8 getCTRLPF() {return myCTRLPF;}
 
 	protected:			
 		uInt8 getEnableBit() {return BLBit;}
+    void handleCTRLPF(uInt8 value);
+    void handleGRP1(uInt8 value);
+    void handleCurrentEnabled();
+
+  public: // for now
+    bool myDENABLE;     // Indicates if the vertically delayed ball is enabled
+    bool myCurrentEnabled;
+		uInt8 myCTRLPF;     // Playfield control register
 	};
 
-	private: 
+
+  private:
 		Player0 myPlayer0;
 		Player1 myPlayer1;
-		//Missile0 myMissile0;
-		//Missile1 myMissile1;
-		//Ball myBall;
-		Playfield myPlayfield;
+		Missile0 myMissile0;
+		Missile1 myMissile1;
+		Ball myBall;
+    Playfield myPlayfield;
 
   public:
-    Playfield getPlayfield() {return myPlayfield;}
-    Player0 getPlayer0() {return myPlayer0;}
-    Player1 getPlayer1() {return myPlayer1;}
+    Player0 getPlayer0() const {return myPlayer0;}
+    Player1 getPlayer1() const {return myPlayer1;}
+    Missile0 getMissile0() {myMissile0;}
+    Missile1 getMissile1() {myMissile1;}
+    Ball getBall() const {return myBall;}
+    Playfield getPlayfield() const {return myPlayfield;}
 };
 
 #endif

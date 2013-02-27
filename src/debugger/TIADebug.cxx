@@ -208,7 +208,7 @@ bool TIADebug::vdelBL(int newVal)
   if(newVal > -1)
     mySystem.poke(VDELBL, ((bool)newVal));
 
-  return myTIA.myVDELBL;
+  return myTIA.myBall.isVDEL();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -217,7 +217,7 @@ bool TIADebug::enaM0(int newVal)
   if(newVal > -1)
     mySystem.poke(ENAM0, ((bool)newVal) << 1);
 
-  return myTIA.myENAM0;
+  return myTIA.myMissile0.myENABLE;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -226,7 +226,7 @@ bool TIADebug::enaM1(int newVal)
   if(newVal > -1)
     mySystem.poke(ENAM1, ((bool)newVal) << 1);
 
-  return myTIA.myENAM1;
+  return myTIA.myMissile1.myENABLE;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -235,7 +235,7 @@ bool TIADebug::enaBL(int newVal)
   if(newVal > -1)
     mySystem.poke(ENABL, ((bool)newVal) << 1);
 
-  return myTIA.myENABL;
+  return myTIA.myBall.isENABLE();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -398,7 +398,7 @@ uInt8 TIADebug::pf0(int newVal)
   if(newVal > -1)
     mySystem.poke(PF0, newVal << 4);
 
-  return myTIA.myPF & 0x0f;
+  return myTIA.myPlayfield.getPF() & 0x0f;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -407,7 +407,7 @@ uInt8 TIADebug::pf1(int newVal)
   if(newVal > -1)
     mySystem.poke(PF1, newVal);
 
-  return (myTIA.myPF & 0xff0) >> 4;
+  return (myTIA.myPlayfield.getPF() & 0xff0) >> 4;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -416,7 +416,7 @@ uInt8 TIADebug::pf2(int newVal)
   if(newVal > -1)
     mySystem.poke(PF2, newVal);
 
-  return (myTIA.myPF & 0xff000) >> 12;
+  return (myTIA.myPlayfield.getPF() & 0xff000) >> 12;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -583,9 +583,9 @@ uInt8 TIADebug::posM1(int newVal)
 uInt8 TIADebug::posBL(int newVal)
 {
   if(newVal > -1)
-    myTIA.myPOSBL = newVal;
+    myTIA.myBall.myPos = newVal;
 
-  return myTIA.myPOSBL;
+  return myTIA.myBall.myPos;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -788,19 +788,19 @@ string TIADebug::toString()
       << booleanWithLabel("refl", refP1()) << " "
       << booleanWithLabel("delay", vdelP1())
       << endl
-      << "M0: " << (myTIA.myENAM0 ? " ENABLED" : "disabled")
+      << "M0: " << (myTIA.myMissile0.myENABLE ? " ENABLED" : "disabled")
       << " pos=" << myDebugger.valueToString(state.pos[M0])
       << " HM=" << myDebugger.valueToString(state.hm[M0])
       << " size=" << myDebugger.valueToString(state.size[M0]) << " "
       << booleanWithLabel("reset", resMP0())
       << endl
-      << "M1: " << (myTIA.myENAM1 ? " ENABLED" : "disabled")
+      << "M1: " << (myTIA.myMissile1.myENABLE ? " ENABLED" : "disabled")
       << " pos=" << myDebugger.valueToString(state.pos[M1])
       << " HM=" << myDebugger.valueToString(state.hm[M1])
       << " size=" << myDebugger.valueToString(state.size[M1]) << " "
       << booleanWithLabel("reset", resMP0())
       << endl
-      << "BL: " << (myTIA.myENABL ? " ENABLED" : "disabled")
+      << "BL: " << (myTIA.myBall.isENABLE() ? " ENABLED" : "disabled")
       << " pos=" << myDebugger.valueToString(state.pos[BL])
       << " HM=" << myDebugger.valueToString(state.hm[BL])
       << " size=" << myDebugger.valueToString(state.size[BL]) << " "
