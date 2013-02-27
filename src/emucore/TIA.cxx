@@ -104,24 +104,24 @@ void TIA::reset()
   mySound.reset();
 
   // Currently no objects are enabled or selectively disabled
-  myEnabledObjects = 0;
+  //myEnabledObjects = 0;
   myDisabledObjects = 0xFF;
   myAllowHMOVEBlanks = true;
 
   // Some default values for the registers
   myVSYNC = myVBLANK = 0;
-  myNUSIZ0 = myNUSIZ1 = 0;
+  //myMissile0.myNUSIZ = myMissile1.myNUSIZ = 0;
   myColor[P0Color] = myColor[P1Color] = myColor[PFColor] = myColor[BKColor] = 0;
   myColor[M0Color] = myColor[M1Color] = myColor[BLColor] = myColor[HBLANKColor] = 0;
 
   //myCTRLPF = 0;
   //myPF = 0;
   //myENAM0 = myENAM1 = false;
-  myHMP0 = myHMP1 = myHMM0 = myHMM1 = myHMBL = 0;
-  myRESMP0 = myRESMP1 = false;
+  //myPlayer0.myHM = myPlayer1.myHM = myMissile0.myHM = myMissile1.myHM = myBall.myHM = 0;
+  //myRESMP0 = myRESMP1 = false;
   myCollision = 0;
   myCollisionEnabledMask = 0xFFFFFFFF;
-  myPOSM0 = myPOSM1 = 0;
+  //myMissile0.myPos = myMissile1.myPos = 0;
 
   // Some default values for the "current" variables
   //myPlayer0.myCurrentGR = 0;
@@ -129,14 +129,14 @@ void TIA::reset()
 
   //myPlayer0.myMotionClock = 0;
   //myMotionClockP1 = 0;
-  myMotionClockM0 = 0;
-  myMotionClockM1 = 0;
+  //myMissile0.myMotionClock = 0;
+  //myMissile1.myMotionClock = 0;
   //myMotionClockBL = 0;
-  myBall.myMotionClock = 0;
+  //myBall.myMotionClock = 0;
 
   //mySuppressP1 = 0;
 
-  myHMM0mmr = myHMM1mmr = myHMBLmmr = false;
+  //myMissile0.myHMmmr = myMissile1.myHMmmr = myBall.myHMmmr = false;
 
   myCurrentHMOVEPos = myPreviousHMOVEPos = 0x7FFFFFFF;
   myHMOVEBlankEnabled = false;
@@ -155,14 +155,16 @@ void TIA::reset()
 
   //myPlayer0.myMask = &TIATables::PxMask[0][0][0][0];
   //myP1Mask = &TIATables::PxMask[0][0][0][0];
-  myM0Mask = &TIATables::MxMask[0][0][0][0];
-  myM1Mask = &TIATables::MxMask[0][0][0][0];
+  //myM0Mask = &TIATables::MxMask[0][0][0][0];
+  //myM1Mask = &TIATables::MxMask[0][0][0][0];
   //myBLMask = &TIATables::BLMask[0][0][0];
   //myPFMask = TIATables::PFMask[0];
 
   myPlayfield.reset();
   myPlayer0.reset();
   myPlayer1.reset();
+	myMissile0.reset();
+	myMissile1.reset();
   myBall.reset();
 
   // Recalculate the size of the display
@@ -297,13 +299,13 @@ bool TIA::save(Serializer& out) const
     out.putInt(myScanlineCountForLastFrame);
     out.putInt(myVSYNCFinishClock);
 
-    out.putByte(myEnabledObjects);
+    //out.putByte(myEnabledObjects);
     out.putByte(myDisabledObjects);
 
     out.putByte(myVSYNC);
     out.putByte(myVBLANK);
-    out.putByte(myNUSIZ0);
-    out.putByte(myNUSIZ1);
+    //out.putByte(myMissile0.myNUSIZ);
+    //out.putByte(myMissile1.myNUSIZ);
 
     out.putIntArray(myColor, 8);
 
@@ -320,16 +322,16 @@ bool TIA::save(Serializer& out) const
     //out.putBool(myENAM1);
     //out.putBool(myENABL);
     //out.putBool(myDENABL);
-    out.putByte(myHMP0);
-    out.putByte(myHMP1);
-    out.putByte(myHMM0);
-    out.putByte(myHMM1);
-    out.putByte(myHMBL);
+    //out.putByte(myPlayer0.myHM);
+    //out.putByte(myPlayer1.myHM);
+    //out.putByte(myMissile0.myHM);
+    //out.putByte(myMissile1.myHM);
+    //out.putByte(myBall.myHM);
     //out.putBool(myVDELP0);
     //out.putBool(myVDELP1);
     //out.putBool(myVDELBL);
-    out.putBool(myRESMP0);
-    out.putBool(myRESMP1);
+    //out.putBool(myRESMP0);
+    //out.putBool(myRESMP1);
     out.putShort(myCollision);
     out.putInt(myCollisionEnabledMask);
 	  //out.putByte(myPlayer0.getCurrentGRP());
@@ -340,29 +342,29 @@ bool TIA::save(Serializer& out) const
 
 	  //out.putShort(myPlayer0.getPos());
     //out.putShort(myPOSP1);
-    out.putShort(myPOSM0);
-    out.putShort(myPOSM1);
+    //out.putShort(myMissile0.myPos);
+    //out.putShort(myMissile1.myPos);
     //out.putShort(myPOSBL);
 
 	  ////out.putInt(myPlayer0.getMotionClock());
     //out.putInt(myMotionClockP1);
-    out.putInt(myMotionClockM0);
-    out.putInt(myMotionClockM1);
+    //out.putInt(myMissile0.myMotionClock);
+    //out.putInt(myMissile1.myMotionClock);
     //out.putInt(myMotionClockBL);
 
 	  //out.putInt(myPlayer0.getStart());
     //out.putInt(myStartP1);
-    out.putInt(myStartM0);
-    out.putInt(myStartM1);
+    //out.putInt(myStartM0);
+    //out.putInt(myStartM1);
 
     //out.putByte(myPlayer0.mySuppress);
     //out.putByte(mySuppressP1);
 
 	  //out.putBool(myPlayer0.isHMmmr());
     //out.putBool(myHMP1mmr);
-    out.putBool(myHMM0mmr);
-    out.putBool(myHMM1mmr);
-    out.putBool(myHMBLmmr);
+    //out.putBool(myMissile0.myHMmmr);
+    //out.putBool(myMissile1.myHMmmr);
+    //out.putBool(myBall.myHMmmr);
 
     out.putInt(myCurrentHMOVEPos);
     out.putInt(myPreviousHMOVEPos);
@@ -375,6 +377,8 @@ bool TIA::save(Serializer& out) const
 	  myPlayfield.save(out);
     myPlayer0.save(out);
 	  myPlayer1.save(out);
+		myMissile0.save(out);
+		myMissile1.save(out);
     myBall.save(out);
 
     // Save the sound sample stuff ...
@@ -407,13 +411,13 @@ bool TIA::load(Serializer& in)
     myScanlineCountForLastFrame = in.getInt();
     myVSYNCFinishClock = (Int32) in.getInt();
 
-    myEnabledObjects = in.getByte();
+    //myEnabledObjects = in.getByte();
     myDisabledObjects = in.getByte();
 
     myVSYNC = in.getByte();
     myVBLANK = in.getByte();
-    myNUSIZ0 = in.getByte();
-    myNUSIZ1 = in.getByte();
+    //myMissile0.myNUSIZ = in.getByte();
+    //myMissile1.myNUSIZ = in.getByte();
 
     in.getIntArray(myColor, 8);
 
@@ -430,16 +434,16 @@ bool TIA::load(Serializer& in)
     //myENAM1 = in.getBool();
     //myENABL = in.getBool();
     //myDENABL = in.getBool();
-    myHMP0 = in.getByte();
-    myHMP1 = in.getByte();
-    myHMM0 = in.getByte();
-    myHMM1 = in.getByte();
-    myHMBL = in.getByte();
+    //myPlayer0.myHM = in.getByte();
+    //myPlayer1.myHM = in.getByte();
+    //myMissile0.myHM = in.getByte();
+    //myMissile1.myHM = in.getByte();
+    //myBall.myHM = in.getByte();
     //myVDELP0 = in.getBool();
     //myVDELP1 = in.getBool();
     //myVDELBL = in.getBool();
-    myRESMP0 = in.getBool();
-    myRESMP1 = in.getBool();
+    //myRESMP0 = in.getBool();
+    //myRESMP1 = in.getBool();
     myCollision = in.getShort();
     myCollisionEnabledMask = in.getInt();
     //myPlayer0.myCurrentGRP = in.getByte();
@@ -450,29 +454,29 @@ bool TIA::load(Serializer& in)
 
     //myPlayer0.myPos = (Int16) in.getShort();
     //myPOSP1 = (Int16) in.getShort();
-    myPOSM0 = (Int16) in.getShort();
-    myPOSM1 = (Int16) in.getShort();
+    //myMissile0.myPos = (Int16) in.getShort();
+    //myMissile1.myPos = (Int16) in.getShort();
     //myPOSBL = (Int16) in.getShort();
 
     //myPlayer0.myMotionClock = (Int32) in.getInt();
     //myMotionClockP1 = (Int32) in.getInt();
-    myMotionClockM0 = (Int32) in.getInt();
-    myMotionClockM1 = (Int32) in.getInt();
+    //myMissile0.myMotionClock = (Int32) in.getInt();
+    //myMissile1.myMotionClock = (Int32) in.getInt();
     //myMotionClockBL = (Int32) in.getInt();
 
     //myPlayer0.myStart = (Int32) in.getInt();
     //myStartP1 = (Int32) in.getInt();
-    myStartM0 = (Int32) in.getInt();
-    myStartM1 = (Int32) in.getInt();
+    //myStartM0 = (Int32) in.getInt();
+    //myStartM1 = (Int32) in.getInt();
 
     //myPlayer0.mySuppress = in.getByte();
     //mySuppressP1 = in.getByte();
 
     //myPlayer0.myHMmmr = in.getBool();
     //myHMP1mmr = in.getBool();
-    myHMM0mmr = in.getBool();
-    myHMM1mmr = in.getBool();
-    myHMBLmmr = in.getBool();
+    //myMissile0.myHMmmr = in.getBool();
+    //myMissile1.myHMmmr = in.getBool();
+    //myBall.myHMmmr = in.getBool();
 
     myCurrentHMOVEPos = (Int32) in.getInt();
     myPreviousHMOVEPos = (Int32) in.getInt();
@@ -485,6 +489,8 @@ bool TIA::load(Serializer& in)
 	  myPlayfield.load(in);
     myPlayer0.load(in);
 	  myPlayer1.load(in);
+		myMissile0.load(in);
+		myMissile1.load(in);
     myBall.load(in);
 
     // Load the sound sample stuff ...
@@ -948,7 +954,7 @@ void TIA::updateScanlineByTrace(int target)
 #endif
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TIA::updateFrame(Int32 clock)
+void TIA::updateFrame(Int32 clock) 
 {
   // See if we've already updated this portion of the screen
   if((clock < myClockStartDisplay) ||
@@ -982,12 +988,11 @@ void TIA::updateFrame(Int32 clock)
       {
         if(myCurrentHMOVEPos >= 97 && myCurrentHMOVEPos < 157)
         {
-          myPlayer0.myPos -= myPlayer0.getMotionClock();  if(myPlayer0.getPos() < 0) myPlayer0.myPos += 160;
-          myPlayer1.myPos -= myPlayer1.getMotionClock();  if(myPlayer1.getPos() < 0) myPlayer1.myPos += 160;
-          myPOSM0 -= myMotionClockM0;  if(myPOSM0 < 0) myPOSM0 += 160;
-          myPOSM1 -= myMotionClockM1;  if(myPOSM1 < 0) myPOSM1 += 160;
-          //myPOSBL -= myMotionClockBL;  if(myPOSBL < 0) myPOSBL += 160;
-          myBall.myPos -= myBall.myMotionClock;  if(myBall.myPos < 0) myBall.myPos += 160;
+          myPlayer0.myPos  -= myPlayer0.getMotionClock();  if(myPlayer0.getPos() < 0) myPlayer0.myPos += 160;
+          myPlayer1.myPos  -= myPlayer1.getMotionClock();  if(myPlayer1.getPos() < 0) myPlayer1.myPos += 160;
+          myMissile0.myPos -= myMissile0.myMotionClock;    if(myMissile0.myPos < 0)   myMissile0.myPos += 160;
+          myMissile1.myPos -= myMissile1.myMotionClock;    if(myMissile1.myPos < 0)   myMissile1.myPos += 160;
+          myBall.myPos     -= myBall.myMotionClock;        if(myBall.myPos < 0)       myBall.myPos += 160;
 
           myPreviousHMOVEPos = myCurrentHMOVEPos;
         }
@@ -999,10 +1004,10 @@ void TIA::updateFrame(Int32 clock)
       // Apply extra clocks for 'more motion required/mmr'
       if(myPlayer0.myHMmmr) { myPlayer0.myPos -= 17;  if(myPlayer0.myPos < 0) myPlayer0.myPos += 160;  posChanged = true; }
       if(myPlayer1.myHMmmr) { myPlayer1.myPos -= 17;  if(myPlayer1.myPos < 0) myPlayer1.myPos += 160;  posChanged = true; }
-      if(myHMM0mmr) { myPOSM0 -= 17;  if(myPOSM0 < 0) myPOSM0 += 160;  posChanged = true; }
-      if(myHMM1mmr) { myPOSM1 -= 17;  if(myPOSM1 < 0) myPOSM1 += 160;  posChanged = true; }
-      //if(myHMBLmmr) { myPOSBL -= 17;  if(myPOSBL < 0) myPOSBL += 160;  posChanged = true; }
-      if(myHMBLmmr) { myBall.myPos -= 17;  if(myBall.myPos < 0) myBall.myPos += 160;  posChanged = true; }
+      if(myMissile0.myHMmmr) { myMissile0.myPos -= 17;  if(myMissile0.myPos < 0) myMissile0.myPos += 160;  posChanged = true; }
+      if(myMissile1.myHMmmr) { myMissile1.myPos -= 17;  if(myMissile1.myPos < 0) myMissile1.myPos += 160;  posChanged = true; }
+      //if(myBall.myHMmmr) { myPOSBL -= 17;  if(myPOSBL < 0) myPOSBL += 160;  posChanged = true; }
+      if(myBall.myHMmmr) { myBall.myPos -= 17;  if(myBall.myPos < 0) myBall.myPos += 160;  posChanged = true; }
 
       // Scanline change, so reset PF mask based on current CTRLPF reflection state 
 			//myPFMask = TIATables::PFMask[myPlayfield.getCTRLPF() & 0x01];
@@ -1072,9 +1077,9 @@ void TIA::updateFrame(Int32 clock)
       {
         // Update masks
         myPlayer0.myMask = &TIATables::PxMask[myPlayer0.getPos() & 0x03]
-            [myPlayer0.getSuppress()][myNUSIZ0 & 0x07][160 - (myPlayer0.getPos() & 0xFC)];
+            [myPlayer0.getSuppress()][myPlayer0.myNUSIZ & 0x07][160 - (myPlayer0.getPos() & 0xFC)];
         myPlayer1.myMask = &TIATables::PxMask[myPlayer1.getPos() & 0x03]
-            [myPlayer1.getSuppress()][myNUSIZ1 & 0x07][160 - (myPlayer1.getPos() & 0xFC)];
+            [myPlayer1.getSuppress()][myPlayer1.myNUSIZ & 0x07][160 - (myPlayer1.getPos() & 0xFC)];
         /*myBall.myMask = &TIATables::BLMask[myPOSBL & 0x03]
             [(myBall.getCTRLPF() & 0x30) >> 4][160 - (myPOSBL & 0xFC)];*/
         myBall.myMask = &TIATables::BLMask[myBall.myPos & 0x03]
@@ -1088,58 +1093,69 @@ void TIA::updateFrame(Int32 clock)
         // simulates the behaviour as visually seen in the aforementioned
         // ROMs.  Other ROMs may break this simulation; more testing is
         // required to figure out what's really going on here.
-        if(myHMM0mmr)
+        if(myMissile0.myHMmmr)
         {
-          switch(myPOSM0 % 4)
+          switch(myMissile0.myPos % 4)
           {
             case 3:
               // Stretch this missle so it's 2 pixels wide and shifted one
               // pixel to the left
-              myM0Mask = &TIATables::MxMask[(myPOSM0-1) & 0x03]
-                  [myNUSIZ0 & 0x07][((myNUSIZ0 & 0x30) >> 4)|1]
-                  [160 - ((myPOSM0-1) & 0xFC)];
-              break;
-            case 2:
-              // Missle is disabled on this line
-              myM0Mask = &TIATables::DisabledMask[0];
-              break;
-            default:
-              myM0Mask = &TIATables::MxMask[myPOSM0 & 0x03]
-                  [myNUSIZ0 & 0x07][(myNUSIZ0 & 0x30) >> 4]
-                  [160 - (myPOSM0 & 0xFC)];
-              break;
-          }
-        }
-        else
-          myM0Mask = &TIATables::MxMask[myPOSM0 & 0x03]
-              [myNUSIZ0 & 0x07][(myNUSIZ0 & 0x30) >> 4][160 - (myPOSM0 & 0xFC)];
-        if(myHMM1mmr)
-        {
-          switch(myPOSM1 % 4)
-          {
-            case 3:
-              // Stretch this missle so it's 2 pixels wide and shifted one
-              // pixel to the left
-              myM1Mask = &TIATables::MxMask[(myPOSM1-1) & 0x03]
-                  [myNUSIZ1 & 0x07][((myNUSIZ1 & 0x30) >> 4)|1]
-                  [160 - ((myPOSM1-1) & 0xFC)];
-              break;
-            case 2:
-              // Missle is disabled on this line
-              myM1Mask = &TIATables::DisabledMask[0];
-              break;
-            default:
-              myM1Mask = &TIATables::MxMask[myPOSM1 & 0x03]
-                  [myNUSIZ1 & 0x07][(myNUSIZ1 & 0x30) >> 4]
-                  [160 - (myPOSM1 & 0xFC)];
-              break;
-          }
-        }
-        else
-          myM1Mask = &TIATables::MxMask[myPOSM1 & 0x03]
-              [myNUSIZ1 & 0x07][(myNUSIZ1 & 0x30) >> 4][160 - (myPOSM1 & 0xFC)];
+              /*myM0Mask = &TIATables::MxMask[(myMissile0.myPos-1) & 0x03]
+                  [myMissile0.myNUSIZ & 0x07][((myMissile0.myNUSIZ & 0x30) >> 4)|1]
+                  [160 - ((myMissile0.myPos-1) & 0xFC)];*/
+              myMissile0.myMask = &TIATables::MxMask[(myMissile0.myPos-1) & 0x03]
+                  [myMissile0.myNUSIZ & 0x07][((myMissile0.myNUSIZ & 0x30) >> 4)|1]
+                  [160 - ((myMissile0.myPos-1) & 0xFC)];
 
-        uInt8 enabledObjects = myEnabledObjects & myDisabledObjects;
+              break;
+            case 2:
+              // Missle is disabled on this line
+              //myM0Mask = &TIATables::DisabledMask[0];
+							myMissile0.myMask = &TIATables::DisabledMask[0];
+              break;
+            default:
+              /*myM0Mask = &TIATables::MxMask[myMissile0.myPos & 0x03]
+                  [myMissile0.myNUSIZ & 0x07][(myMissile0.myNUSIZ & 0x30) >> 4]
+                  [160 - (myMissile0.myPos & 0xFC)];*/
+							myMissile0.myMask = &TIATables::MxMask[myMissile0.myPos & 0x03]
+                  [myMissile0.myNUSIZ & 0x07][(myMissile0.myNUSIZ & 0x30) >> 4]
+                  [160 - (myMissile0.myPos & 0xFC)];
+              break;
+          }
+        }
+        else
+          /*myM0Mask = &TIATables::MxMask[myMissile0.myPos & 0x03]
+              [myMissile0.myNUSIZ & 0x07][(myMissile0.myNUSIZ & 0x30) >> 4][160 - (myMissile0.myPos & 0xFC)];*/
+          myMissile0.myMask = &TIATables::MxMask[myMissile0.myPos & 0x03]
+              [myMissile0.myNUSIZ & 0x07][(myMissile0.myNUSIZ & 0x30) >> 4][160 - (myMissile0.myPos & 0xFC)];
+
+        if(myMissile1.myHMmmr)
+        {
+          switch(myMissile1.myPos % 4)
+          {
+            case 3:
+              // Stretch this missle so it's 2 pixels wide and shifted one
+              // pixel to the left
+							myMissile1.myMask = &TIATables::MxMask[(myMissile1.myPos-1) & 0x03]
+                  [myMissile1.myNUSIZ & 0x07][((myMissile1.myNUSIZ & 0x30) >> 4)|1]
+                  [160 - ((myMissile1.myPos-1) & 0xFC)];
+              break;
+            case 2:
+              // Missle is disabled on this line
+              myMissile1.myMask = &TIATables::DisabledMask[0];
+              break;
+            default:
+              myMissile1.myMask = &TIATables::MxMask[myMissile1.myPos & 0x03]
+                  [myMissile1.myNUSIZ & 0x07][(myMissile1.myNUSIZ & 0x30) >> 4]
+                  [160 - (myMissile1.myPos & 0xFC)];
+              break;
+          }
+        }
+        else
+          myMissile1.myMask = &TIATables::MxMask[myMissile1.myPos & 0x03]
+              [myMissile1.myNUSIZ & 0x07][(myMissile1.myNUSIZ & 0x30) >> 4][160 - (myMissile1.myPos & 0xFC)];
+
+        //uInt8 enabledObjects = myEnabledObjects & myDisabledObjects;
         uInt32 hpos = clocksFromStartOfScanLine - HBLANK;
         for(; myFramePointer < ending; ++myFramePointer, ++hpos)
         {
@@ -1151,19 +1167,21 @@ void TIA::updateFrame(Int32 clock)
             enabled |= BLBit;*/
           enabled |= myBall.getEnabled(hpos);
 
-          if((enabledObjects & P1Bit) && (myPlayer1.getCurrentGRP() & myPlayer1.myMask[hpos]))
-            enabled |= P1Bit;
-					//enabled |= myPlayer1.getEnabled(hpos);
+          /*if((enabledObjects & P1Bit) && (myPlayer1.getCurrentGRP() & myPlayer1.myMask[hpos]))
+            enabled |= P1Bit;*/
+					enabled |= myPlayer1.getEnabled(hpos);
 
-          if((enabledObjects & M1Bit) && myM1Mask[hpos])
-            enabled |= M1Bit;
+          /*if((enabledObjects & M1Bit) && myM1Mask[hpos])
+            enabled |= M1Bit;*/
+					enabled |= myMissile1.getEnabled(hpos);
 
-				if((enabledObjects & P0Bit) && (myPlayer0.getCurrentGRP() & myPlayer0.myMask[hpos]))
-            enabled |= P0Bit;
-					//enabled |= myPlayer0.getEnabled(hpos);
+					/*if((enabledObjects & P0Bit) && (myPlayer0.getCurrentGRP() & myPlayer0.myMask[hpos]))
+            enabled |= P0Bit;*/
+					enabled |= myPlayer0.getEnabled(hpos);
 
-          if((enabledObjects & M0Bit) && myM0Mask[hpos])
-            enabled |= M0Bit;
+          /*if((enabledObjects & M0Bit) && myM0Mask[hpos])
+            enabled |= M0Bit;*/
+					enabled |= myMissile0.getEnabled(hpos);
 
           myCollision |= TIATables::CollisionMask[enabled];
           *myFramePointer = myColorPtr[myPriorityEncoder[hpos < 80 ? 0 : 1]
@@ -1464,13 +1482,16 @@ bool TIA::poke(uInt16 addr, uInt8 value)
 			// 2. wait until current copy has been drawn
 			// 3. change copies
 
-
-			if (value != myNUSIZ0) 
+			/*if (value != myMissile0.myNUSIZ) 
 			{
-				uInt32 delay = nusizDelay[myNUSIZ0 & 7][2];
-				updateFrame(clock + delay);
-				myNUSIZ0 = value;
-			}
+				uInt32 delay = nusizDelay[myMissile0.myNUSIZ & 7][2];
+				updateFrame(clock + delay);	
+				myMissile0.myNUSIZ = value;
+			}*/
+			updateFrame(clock + 8);	
+			
+			myPlayer0.handleRegisterUpdate(addr, value);
+			myMissile0.handleRegisterUpdate(addr, value);
       break;
     }
 
@@ -1478,16 +1499,19 @@ bool TIA::poke(uInt16 addr, uInt8 value)
     {
       // TODO - 08-11-2009: determine correct delay instead of always
       //                    using '8' in TIATables::PokeDelay
-
-			if (value != myNUSIZ1) 
+			/*if (value != myMissile1.myNUSIZ) 
 			{
-				uInt32 delay = nusizDelay[myNUSIZ1 & 7][2];
+				uInt32 delay = nusizDelay[myMissile1.myNUSIZ & 7][2];
 				updateFrame(clock + delay);
-				myNUSIZ1 = value;			
-			}
+				myMissile1.myNUSIZ = value;			
+			}*/
+			updateFrame(clock + 8);	
+
+			myPlayer1.handleRegisterUpdate(addr, value);
+			myMissile1.handleRegisterUpdate(addr, value);
 
 //			updateFrame(clock + 8);
-//      myNUSIZ1 = value;
+//      myMissile1.myNUSIZ = value;
 //			mySuppressP1 = 0;      
       break;
     }
@@ -1571,11 +1595,10 @@ bool TIA::poke(uInt16 addr, uInt8 value)
     {
       myPlayfield.handleRegisterUpdate(addr, value);
 
-      if(myPlayfield.getPF() == 0)
+      /*if(myPlayfield.getPF() == 0)
         myEnabledObjects &= ~PFBit;
       else
-        myEnabledObjects |= PFBit;
-	
+        myEnabledObjects |= PFBit;*/	
 
     #ifdef DEBUGGER_SUPPORT
       uInt16 dataAddr = mySystem->m6502().lastDataAddressForPoke();
@@ -1600,14 +1623,14 @@ bool TIA::poke(uInt16 addr, uInt8 value)
       else
       {
         newx = hpos < -2 ? 3 : ((hpos + 5) % 160);
-        applyPreviousHMOVEMotion(hpos, newx, myHMP0);
+        applyPreviousHMOVEMotion(hpos, newx, myPlayer0.myHM);
       }
       if(myPlayer0.myPos != newx)
       {
         // TODO - update player timing
 
         // Find out under what condition the player is being reset
-        delay = TIATables::PxPosResetWhen[myNUSIZ0 & 7][myPlayer0.getPos()][newx];
+        delay = TIATables::PxPosResetWhen[myPlayer0.myNUSIZ & 7][myPlayer0.getPos()][newx];
 
         switch(delay)
         {
@@ -1650,14 +1673,14 @@ bool TIA::poke(uInt16 addr, uInt8 value)
       else
       {
         newx = hpos < -2 ? 3 : ((hpos + 5) % 160);
-        applyPreviousHMOVEMotion(hpos, newx, myHMP1);
+        applyPreviousHMOVEMotion(hpos, newx, myPlayer1.myHM);
       }
       if(myPlayer1.getPos() != newx)
       {
         // TODO - update player timing
 
         // Find out under what condition the player is being reset
-        delay = TIATables::PxPosResetWhen[myNUSIZ1 & 7][myPlayer1.getPos()][newx];
+        delay = TIATables::PxPosResetWhen[myPlayer1.myNUSIZ & 7][myPlayer1.getPos()][newx];
 
         switch(delay)
         {
@@ -1695,16 +1718,16 @@ bool TIA::poke(uInt16 addr, uInt8 value)
       {
         newx = hpos < 7 ? 2 : ((hpos + 4) % 160);
         // If HMOVE is active, adjust for any remaining horizontal move clocks
-        applyActiveHMOVEMotion(hpos, newx, myMotionClockM0);
+        applyActiveHMOVEMotion(hpos, newx, myMissile0.myMotionClock);
       }
       else
       {
         newx = hpos < -1 ? 2 : ((hpos + 4) % 160);
-        applyPreviousHMOVEMotion(hpos, newx, myHMM0);
+        applyPreviousHMOVEMotion(hpos, newx, myMissile0.myHM);
       }
-      if(newx != myPOSM0)
+      if(newx != myMissile0.myPos)
       {
-        myPOSM0 = newx;
+        myMissile0.myPos = newx;
       }
       break;
     }
@@ -1719,16 +1742,16 @@ bool TIA::poke(uInt16 addr, uInt8 value)
       {
         newx = hpos < 7 ? 2 : ((hpos + 4) % 160);
         // If HMOVE is active, adjust for any remaining horizontal move clocks
-        applyActiveHMOVEMotion(hpos, newx, myMotionClockM1);
+        applyActiveHMOVEMotion(hpos, newx, myMissile1.myMotionClock);
       }
       else
       {
         newx = hpos < -1 ? 2 : ((hpos + 4) % 160);
-        applyPreviousHMOVEMotion(hpos, newx, myHMM1);
+        applyPreviousHMOVEMotion(hpos, newx, myMissile1.myHM);
       }
-      if(newx != myPOSM1)
+      if(newx != myMissile1.myPos)
       {
-        myPOSM1 = newx;
+        myMissile1.myPos = newx;
       }
       break;
     }
@@ -1750,8 +1773,8 @@ bool TIA::poke(uInt16 addr, uInt8 value)
       {
         //myPOSBL = hpos < 0 ? 2 : ((hpos + 4) % 160);
         myBall.myPos = hpos < 0 ? 2 : ((hpos + 4) % 160);
-        //applyPreviousHMOVEMotion(hpos, myPOSBL, myHMBL);
-        applyPreviousHMOVEMotion(hpos, myBall.myPos, myHMBL);
+        //applyPreviousHMOVEMotion(hpos, myPOSBL, myBall.myHM);
+        applyPreviousHMOVEMotion(hpos, myBall.myPos, myBall.myHM);
       }
       break;
     }
@@ -1804,7 +1827,7 @@ bool TIA::poke(uInt16 addr, uInt8 value)
       myPlayer1.handleRegisterUpdate(addr, value);  // handles VDELP1
 
       // Set enabled object bits
-      if(myPlayer0.getCurrentGRP() != 0)
+      /*if(myPlayer0.getCurrentGRP() != 0)
         myEnabledObjects |= P0Bit;
       else
         myEnabledObjects &= ~P0Bit;
@@ -1812,7 +1835,7 @@ bool TIA::poke(uInt16 addr, uInt8 value)
       if(myPlayer1.getCurrentGRP() != 0)
         myEnabledObjects |= P1Bit;
       else
-        myEnabledObjects &= ~P1Bit;
+        myEnabledObjects &= ~P1Bit;*/
 
     #ifdef DEBUGGER_SUPPORT
       uInt16 dataAddr = mySystem->m6502().lastDataAddressForPoke();
@@ -1829,7 +1852,7 @@ bool TIA::poke(uInt16 addr, uInt8 value)
       myBall.handleRegisterUpdate(addr, value); // handlese VDELBK
 
       // Set enabled object bits
-      if(myPlayer0.getCurrentGRP() != 0)
+      /*if(myPlayer0.getCurrentGRP() != 0)
         myEnabledObjects |= P0Bit;
       else
         myEnabledObjects &= ~P0Bit;
@@ -1837,7 +1860,7 @@ bool TIA::poke(uInt16 addr, uInt8 value)
       if(myPlayer1.getCurrentGRP() != 0)
         myEnabledObjects |= P1Bit;
       else
-        myEnabledObjects &= ~P1Bit;
+        myEnabledObjects &= ~P1Bit;*/
 
       /*if(myBall.myVDEL ? myBall.myDENABLE : myBall.myENABLE)
         myEnabledObjects |= BLBit;
@@ -1857,10 +1880,10 @@ bool TIA::poke(uInt16 addr, uInt8 value)
       //myENAM0 = value & 0x02;
       myMissile0.handleRegisterUpdate(addr, value);
 
-      if(myMissile0.myENABLE && !myMissile0.myRESMP)
+      /*if(myMissile0.myENABLE && !myMissile0.myRESMP)
         myEnabledObjects |= M0Bit;
       else
-        myEnabledObjects &= ~M0Bit;
+        myEnabledObjects &= ~M0Bit;*/
       break;
     }
 
@@ -1869,10 +1892,10 @@ bool TIA::poke(uInt16 addr, uInt8 value)
       //myENAM1 = value & 0x02;
       myMissile1.handleRegisterUpdate(addr, value);
 
-      if(myMissile1.myENABLE && !myMissile1.myRESMP)
+      /*if(myMissile1.myENABLE && !myMissile1.myRESMP)
         myEnabledObjects |= M1Bit;
       else
-        myEnabledObjects &= ~M1Bit;
+        myEnabledObjects &= ~M1Bit;*/
       break;
     }
 
@@ -1892,31 +1915,36 @@ bool TIA::poke(uInt16 addr, uInt8 value)
 
     case HMP0:    // Horizontal Motion Player 0
     {
-      pokeHMP0(value, clock);
+			myPlayer0.handleRegisterUpdate(addr, value);
+      //pokeHMP0(value, clock);
       break;
     }
 
     case HMP1:    // Horizontal Motion Player 1
     {
-      pokeHMP1(value, clock);
+			myPlayer1.handleRegisterUpdate(addr, value);
+      //pokeHMP1(value, clock);
       break;
     }
 
     case HMM0:    // Horizontal Motion Missle 0
     {
-      pokeHMM0(value, clock);
+			myMissile0.handleRegisterUpdate(addr, value);
+      //pokeHMM0(value, clock);
       break;
     }
 
     case HMM1:    // Horizontal Motion Missle 1
     {
-      pokeHMM1(value, clock);
+			myMissile1.handleRegisterUpdate(addr, value);
+      //pokeHMM1(value, clock);
       break;
     }
 
     case HMBL:    // Horizontal Motion Ball
     {
-      pokeHMBL(value, clock);
+			myBall.handleRegisterUpdate(addr, value);
+      //pokeHMBL(value, clock);
       break;
     }
 
@@ -1924,21 +1952,21 @@ bool TIA::poke(uInt16 addr, uInt8 value)
     {
 	    myPlayer0.handleRegisterUpdate(addr, value);
 
-      if(myPlayer0.getCurrentGRP() != 0)
+      /*if(myPlayer0.getCurrentGRP() != 0)
         myEnabledObjects |= P0Bit;
       else
         myEnabledObjects &= ~P0Bit;
-      break;
+      break;*/
     }
 
     case VDELP1:  // Vertical Delay Player 1
     {
 	    myPlayer1.handleRegisterUpdate(addr, value);
 
-      if(myPlayer1.getCurrentGRP() != 0)
+      /*if(myPlayer1.getCurrentGRP() != 0)
         myEnabledObjects |= P1Bit;
       else
-        myEnabledObjects &= ~P1Bit;
+        myEnabledObjects &= ~P1Bit;*/
       break;
     }
 
@@ -1957,58 +1985,61 @@ bool TIA::poke(uInt16 addr, uInt8 value)
 
     case RESMP0:  // Reset missle 0 to player 0
     {
-      if(myRESMP0 && !(value & 0x02))
+			myMissile0.handleRegisterUpdate(addr, value);
+
+      /*if(myRESMP0 && !(value & 0x02))
       {
         uInt16 middle = 4;
-        switch(myNUSIZ0 & 0x07)
+        switch(myMissile0.myNUSIZ & 0x07)
         {
           // 1-pixel delay is taken care of in TIATables::PxMask
           case 0x05: middle = 8;  break;  // double size
           case 0x07: middle = 16; break;  // quad size
         }
-        myPOSM0 = myPlayer0.getPos() + middle;
+        myMissile0.myPos = myPlayer0.getPos() + middle;
         if(myCurrentHMOVEPos != 0x7FFFFFFF)
         {
-          myPOSM0 -= (8 - myPlayer0.getMotionClock());
-          myPOSM0 += (8 - myMotionClockM0);
+          myMissile0.myPos -= (8 - myPlayer0.getMotionClock());
+          myMissile0.myPos += (8 - myMissile0.myMotionClock);
         }
-        CLAMP_POS(myPOSM0);
+        CLAMP_POS(myMissile0.myPos);
       }
-      myRESMP0 = value & 0x02;
+      myRESMP0 = value & 0x02;*/
 
-      if(myMissile0.myENABLE && !myMissile0.myRESMP)
+      /*if(myMissile0.myENABLE && !myMissile0.myRESMP)
         myEnabledObjects |= M0Bit;
       else
-        myEnabledObjects &= ~M0Bit;
-
+        myEnabledObjects &= ~M0Bit;*/
       break;
     }
 
     case RESMP1:  // Reset missle 1 to player 1
     {
-      if(myRESMP1 && !(value & 0x02))
+			myMissile1.handleRegisterUpdate(addr, value);
+
+      /*if(myRESMP1 && !(value & 0x02))
       {
         uInt16 middle = 4;
-        switch(myNUSIZ1 & 0x07)
+        switch(myMissile1.myNUSIZ & 0x07)
         {
           // 1-pixel delay is taken care of in TIATables::PxMask
           case 0x05: middle = 8;  break;  // double size
           case 0x07: middle = 16; break;  // quad size
         }
-        myPOSM1 = myPlayer1.getPos() + middle;
+        myMissile1.myPos = myPlayer1.getPos() + middle;
         if(myCurrentHMOVEPos != 0x7FFFFFFF)
         {
-          myPOSM1 -= (8 - myPlayer1.getMotionClock());
-          myPOSM1 += (8 - myMotionClockM1);
+          myMissile1.myPos -= (8 - myPlayer1.getMotionClock());
+          myMissile1.myPos += (8 - myMissile1.myMotionClock);
         }
-        CLAMP_POS(myPOSM1);
+        CLAMP_POS(myMissile1.myPos);
       }
-      myRESMP1 = value & 0x02;
+      myRESMP1 = value & 0x02;*/
 
-      if(myMissile1.myENABLE && !myMissile1.myRESMP)
+      /*if(myMissile1.myENABLE && !myMissile1.myRESMP)
         myEnabledObjects |= M1Bit;
       else
-        myEnabledObjects &= ~M1Bit;
+        myEnabledObjects &= ~M1Bit;*/
       break;
     }
 
@@ -2028,20 +2059,20 @@ bool TIA::poke(uInt16 addr, uInt8 value)
         Int16 cycle_fix = 17 - ((hpos + VBLANK + 7) / 4);
         if(myPlayer0.isHMmmr())  myPlayer0.myPos = (myPlayer0.getPos() + cycle_fix) % 160;
         if(myPlayer1.isHMmmr())  myPlayer1.myPos = (myPlayer1.getPos() + cycle_fix) % 160;
-        if(myHMM0mmr)  myPOSM0 = (myPOSM0 + cycle_fix) % 160;
-        if(myHMM1mmr)  myPOSM1 = (myPOSM1 + cycle_fix) % 160;
-        //if(myHMBLmmr)  myPOSBL = (myPOSBL + cycle_fix) % 160;
-        if(myHMBLmmr)  myBall.myPos = (myBall.myPos + cycle_fix) % 160;        
+        if(myMissile0.myHMmmr)  myMissile0.myPos = (myMissile0.myPos + cycle_fix) % 160;
+        if(myMissile1.myHMmmr)  myMissile1.myPos = (myMissile1.myPos + cycle_fix) % 160;
+        //if(myBall.myHMmmr)  myPOSBL = (myPOSBL + cycle_fix) % 160;
+        if(myBall.myHMmmr)  myBall.myPos = (myBall.myPos + cycle_fix) % 160;        
       }
-      myPlayer0.myHMmmr = myPlayer1.myHMmmr = myHMM0mmr = myHMM1mmr = myHMBLmmr = false;
+      myPlayer0.myHMmmr = myPlayer1.myHMmmr = myMissile0.myHMmmr = myMissile1.myHMmmr = myBall.myHMmmr = false;
 
       // Can HMOVE activities be ignored?
       if(hpos >= -5 && hpos < 97 )
       {
         myPlayer0.myMotionClock = 0;
         myPlayer1.myMotionClock = 0;
-        myMotionClockM0 = 0;
-        myMotionClockM1 = 0;
+        myMissile0.myMotionClock = 0;
+        myMissile1.myMotionClock = 0;
         //myMotionClockBL = 0;
         myBall.myMotionClock = 0;
         myHMOVEBlankEnabled = false;
@@ -2049,12 +2080,12 @@ bool TIA::poke(uInt16 addr, uInt8 value)
         break;
       }
 
-      myPlayer0.myMotionClock = (myHMP0 ^ 0x80) >> 4;
-      myPlayer1.myMotionClock = (myHMP1 ^ 0x80) >> 4;
-      myMotionClockM0 = (myHMM0 ^ 0x80) >> 4;
-      myMotionClockM1 = (myHMM1 ^ 0x80) >> 4;
-      //myMotionClockBL = (myHMBL ^ 0x80) >> 4;
-      myBall.myMotionClock = (myHMBL ^ 0x80) >> 4;
+      myPlayer0.myMotionClock = (myPlayer0.myHM ^ 0x80) >> 4;
+      myPlayer1.myMotionClock = (myPlayer1.myHM ^ 0x80) >> 4;
+      myMissile0.myMotionClock = (myMissile0.myHM ^ 0x80) >> 4;
+      myMissile1.myMotionClock = (myMissile1.myHM ^ 0x80) >> 4;
+      //myMotionClockBL = (myBall.myHM ^ 0x80) >> 4;
+      myBall.myMotionClock = (myBall.myHM ^ 0x80) >> 4;
 
       // Adjust number of graphics motion clocks for active display
       if(hpos >= 97 && hpos < 151)
@@ -2062,14 +2093,14 @@ bool TIA::poke(uInt16 addr, uInt8 value)
         Int16 skip_motclks = (160 - myCurrentHMOVEPos - 6) >> 2;
         myPlayer0.myMotionClock -= skip_motclks;
         myPlayer1.myMotionClock -= skip_motclks;
-        myMotionClockM0 -= skip_motclks;
-        myMotionClockM1 -= skip_motclks;
+        myMissile0.myMotionClock -= skip_motclks;
+        myMissile1.myMotionClock -= skip_motclks;
         //myMotionClockBL -= skip_motclks;
         myBall.myMotionClock -= skip_motclks;
         if(myPlayer0.getMotionClock() < 0)  myPlayer0.myMotionClock = 0;
         if(myPlayer1.getMotionClock() < 0)  myPlayer1.myMotionClock = 0;
-        if(myMotionClockM0 < 0)  myMotionClockM0 = 0;
-        if(myMotionClockM1 < 0)  myMotionClockM1 = 0;
+        if(myMissile0.myMotionClock < 0)  myMissile0.myMotionClock = 0;
+        if(myMissile1.myMotionClock < 0)  myMissile1.myMotionClock = 0;
         //if(myMotionClockBL < 0)  myMotionClockBL = 0;
         if(myBall.myMotionClock < 0)  myBall.myMotionClock = 0;
       }
@@ -2079,8 +2110,8 @@ bool TIA::poke(uInt16 addr, uInt8 value)
         Int16 max_motclks = (7 - (myCurrentHMOVEPos + 5)) >> 2;
         if(myPlayer0.getMotionClock() > max_motclks)  myPlayer0.myMotionClock = max_motclks;
         if(myPlayer1.getMotionClock() > max_motclks)  myPlayer1.myMotionClock = max_motclks;
-        if(myMotionClockM0 > max_motclks)  myMotionClockM0 = max_motclks;
-        if(myMotionClockM1 > max_motclks)  myMotionClockM1 = max_motclks;
+        if(myMissile0.myMotionClock > max_motclks)  myMissile0.myMotionClock = max_motclks;
+        if(myMissile1.myMotionClock > max_motclks)  myMissile1.myMotionClock = max_motclks;
         //if(myMotionClockBL > max_motclks)  myMotionClockBL = max_motclks;
         if(myBall.myMotionClock > max_motclks) myBall.myMotionClock = max_motclks;
       }
@@ -2090,8 +2121,8 @@ bool TIA::poke(uInt16 addr, uInt8 value)
       {
         myPlayer0.myPos += 8 - myPlayer0.getMotionClock();
         myPlayer1.myPos += 8 - myPlayer1.getMotionClock();
-        myPOSM0 += 8 - myMotionClockM0;
-        myPOSM1 += 8 - myMotionClockM1;
+        myMissile0.myPos += 8 - myMissile0.myMotionClock;
+        myMissile1.myPos += 8 - myMissile1.myMotionClock;
         //myPOSBL += 8 - myMotionClockBL;
         myBall.myPos += 8 - myBall.myMotionClock;
       }
@@ -2099,8 +2130,8 @@ bool TIA::poke(uInt16 addr, uInt8 value)
       // Make sure positions are in range
       CLAMP_POS(myPlayer0.myPos);
       CLAMP_POS(myPlayer1.myPos);
-      CLAMP_POS(myPOSM0);
-      CLAMP_POS(myPOSM1);
+      CLAMP_POS(myMissile0.myPos);
+      CLAMP_POS(myMissile1.myPos);
       //CLAMP_POS(myPOSBL);
       CLAMP_POS(myBall.myPos);
 
@@ -2111,11 +2142,16 @@ bool TIA::poke(uInt16 addr, uInt8 value)
 
     case HMCLR:   // Clear horizontal motion registers
     {
-      pokeHMP0(0, clock);
+			myPlayer0.handleRegisterUpdate(addr, 0);
+			myPlayer1.handleRegisterUpdate(addr, 0);
+			myMissile0.handleRegisterUpdate(addr, 0);
+			myMissile1.handleRegisterUpdate(addr, 0);
+			myBall.handleRegisterUpdate(addr, 0);
+      /*pokeHMP0(0, clock);
       pokeHMP1(0, clock);
       pokeHMM0(0, clock);
       pokeHMM1(0, clock);
-      pokeHMBL(0, clock);
+      pokeHMBL(0, clock);*/
       break;
     }
 
@@ -2162,10 +2198,11 @@ bool TIA::poke(uInt16 addr, uInt8 value)
 // Most of the ideas in these methods come from MESS.
 // (used with permission from Wilbert Pol)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+/*
 void TIA::pokeHMP0(uInt8 value, Int32 clock)
 {
   value &= 0xF0;
-  if(myHMP0 == value)
+  if(myPlayer0.myHM == value)
     return;
 
   int hpos  = (clock - myClockWhenFrameStarted) % 228 - HBLANK;
@@ -2192,14 +2229,14 @@ void TIA::pokeHMP0(uInt8 value, Int32 clock)
     CLAMP_POS(myPlayer0.myPos);
     // TODO - adjust player timing
   }
-  myHMP0 = value;
+  myPlayer0.myHM = value;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TIA::pokeHMP1(uInt8 value, Int32 clock)
 {
   value &= 0xF0;
-  if(myHMP1 == value)
+  if(myPlayer1.myHM == value)
     return;
 
   int hpos  = (clock - myClockWhenFrameStarted) % 228 - HBLANK;
@@ -2226,80 +2263,80 @@ void TIA::pokeHMP1(uInt8 value, Int32 clock)
     CLAMP_POS(myPlayer1.myPos);
     // TODO - adjust player timing
   }
-  myHMP1 = value;
+  myPlayer1.myHM = value;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TIA::pokeHMM0(uInt8 value, Int32 clock)
 {
   value &= 0xF0;
-  if(myHMM0 == value)
+  if(myMissile0.myHM == value)
     return;
 
   int hpos  = (clock - myClockWhenFrameStarted) % 228 - HBLANK;
 
   // Check if HMOVE is currently active
   if(myCurrentHMOVEPos != 0x7FFFFFFF &&
-     hpos < BSPF_min(myCurrentHMOVEPos + 6 + myMotionClockM0 * 4, 7))
+     hpos < BSPF_min(myCurrentHMOVEPos + 6 + myMissile0.myMotionClock * 4, 7))
   {
     Int32 newMotion = (value ^ 0x80) >> 4;
     // Check if new horizontal move can still be applied normally
-    if(newMotion > myMotionClockM0 ||
+    if(newMotion > myMissile0.myMotionClock ||
        hpos <= BSPF_min(myCurrentHMOVEPos + 6 + newMotion * 4, 7))
     {
-      myPOSM0 -= (newMotion - myMotionClockM0);
-      myMotionClockM0 = newMotion;
+      myMissile0.myPos -= (newMotion - myMissile0.myMotionClock);
+      myMissile0.myMotionClock = newMotion;
     }
     else
     {
-      myPOSM0 -= (15 - myMotionClockM0);
-      myMotionClockM0 = 15;
+      myMissile0.myPos -= (15 - myMissile0.myMotionClock);
+      myMissile0.myMotionClock = 15;
       if(value != 0x70 && value != 0x80)
-        myHMM0mmr = true;
+        myMissile0.myHMmmr = true;
     }
-    CLAMP_POS(myPOSM0);
+    CLAMP_POS(myMissile0.myPos);
   }
-  myHMM0 = value;
+  myMissile0.myHM = value;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TIA::pokeHMM1(uInt8 value, Int32 clock)
 {
   value &= 0xF0;
-  if(myHMM1 == value)
+  if(myMissile1.myHM == value)
     return;
 
   int hpos  = (clock - myClockWhenFrameStarted) % 228 - HBLANK;
 
   // Check if HMOVE is currently active
   if(myCurrentHMOVEPos != 0x7FFFFFFF &&
-     hpos < BSPF_min(myCurrentHMOVEPos + 6 + myMotionClockM1 * 4, 7))
+     hpos < BSPF_min(myCurrentHMOVEPos + 6 + myMissile1.myMotionClock * 4, 7))
   {
     Int32 newMotion = (value ^ 0x80) >> 4;
     // Check if new horizontal move can still be applied normally
-    if(newMotion > myMotionClockM1 ||
+    if(newMotion > myMissile1.myMotionClock ||
        hpos <= BSPF_min(myCurrentHMOVEPos + 6 + newMotion * 4, 7))
     {
-      myPOSM1 -= (newMotion - myMotionClockM1);
-      myMotionClockM1 = newMotion;
+      myMissile1.myPos -= (newMotion - myMissile1.myMotionClock);
+      myMissile1.myMotionClock = newMotion;
     }
     else
     {
-      myPOSM1 -= (15 - myMotionClockM1);
-      myMotionClockM1 = 15;
+      myMissile1.myPos -= (15 - myMissile1.myMotionClock);
+      myMissile1.myMotionClock = 15;
       if(value != 0x70 && value != 0x80)
-        myHMM1mmr = true;
+        myMissile1.myHMmmr = true;
     }
-    CLAMP_POS(myPOSM1);
+    CLAMP_POS(myMissile1.myPos);
   }
-  myHMM1 = value;
+  myMissile1.myHM = value;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TIA::pokeHMBL(uInt8 value, Int32 clock)
 {
   value &= 0xF0;
-  if(myHMBL == value)
+  if(myBall.myHM == value)
     return;
 
   int hpos  = (clock - myClockWhenFrameStarted) % 228 - HBLANK;
@@ -2321,12 +2358,13 @@ void TIA::pokeHMBL(uInt8 value, Int32 clock)
       myBall.myPos -= (15 - myBall.myMotionClock);
       myBall.myMotionClock = 15;
       if(value != 0x70 && value != 0x80)
-        myHMBLmmr = true;
+        myBall.myHMmmr = true;
     }
     CLAMP_POS(myBall.myPos);
   }
-  myHMBL = value;
+  myBall.myHM = value;
 }
+*/
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // The following two methods apply extra clocks when a horizontal motion
@@ -2509,8 +2547,6 @@ void TIA::Playfield::handleCTRLPF(uInt8 value)
 	//myMask = TIATables::PFMask[myCTRLPF & 0x01];
 }*/
 
-
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TIA::AbstractMoveableTIAObject::AbstractMoveableTIAObject(const TIA& tia) : AbstractTIAObject(tia)
@@ -2556,26 +2592,80 @@ uInt8 TIA::AbstractMoveableTIAObject::getState()
 void TIA::AbstractMoveableTIAObject::handleRegisterUpdate(uInt8 addr, uInt8 value)
 {
 	AbstractTIAObject::handleRegisterUpdate(addr, value);
+
+	switch(addr)
+	{
+	case HMCLR:
+		handleHM(value);
+		break;
+	}
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Note that the following methods to change the horizontal motion registers
+// are not completely accurate.  We should be taking care of the following
+// explanation from A. Towers Hardware Notes:
+//
+//   Much more interesting is this: if the counter has not yet
+//   reached the value in HMxx (or has reached it but not yet
+//   commited the comparison) and a value with at least one bit
+//   in common with all remaining internal counter states is
+//   written (zeros or ones), the stopping condition will never be
+//   reached and the object will be moved a full 15 pixels left.
+//   In addition to this, the HMOVE will complete without clearing
+//   the "more movement required" latch, and so will continue to send
+//   an additional clock signal every 4 CLK (during visible and
+//   non-visible parts of the scanline) until another HMOVE operation
+//   clears the latch. The HMCLR command does not reset these latches.
+//
+// This condition is what causes the 'starfield effect' in Cosmic Ark,
+// and the 'snow' in Stay Frosty.  Ideally, we'd trace the counter and
+// do a compare every colour clock, updating the horizontal positions
+// when applicable.  We can save time by cheating, and noting that the
+// effect only occurs for 'magic numbers' 0x70 and 0x80.
+//
+// Most of the ideas in these methods come from MESS.
+// (used with permission from Wilbert Pol)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TIA::AbstractMoveableTIAObject::handleHM(uInt8 value)
+{
+	Int32 clock = myTia.mySystem->cycles() * 3;
+  value &= 0xF0;
+  if(myHM == value)
+    return;
+
+  int hpos  = (clock - myTia.myClockWhenFrameStarted) % 228 - HBLANK;
+
+  // Check if HMOVE is currently active
+  if(myTia.myCurrentHMOVEPos != 0x7FFFFFFF &&
+     hpos < BSPF_min(myTia.myCurrentHMOVEPos + 6 + myMotionClock * 4, 7))
+  {
+    Int32 newMotion = (value ^ 0x80) >> 4;
+    // Check if new horizontal move can still be applied normally
+    if(newMotion > myMotionClock ||
+       hpos <= BSPF_min(myTia.myCurrentHMOVEPos + 6 + newMotion * 4, 7))
+    {
+      myPos -= (newMotion - myMotionClock);
+      myMotionClock = newMotion;
+    }
+    else
+    {
+      myPos -= (15 - myMotionClock);
+      myMotionClock = 15;
+      if(value != 0x70 && value != 0x80)
+        myHMmmr = true;
+    }
+    CLAMP_POS(myPos);
+    // TODO - adjust player timing
+  }
+  myHM = value;
+}
+
 
 void TIA::AbstractMoveableTIAObject::handleVDEL(uInt8 value)
 {
 	myVDEL = value & 0x01;
 }
-
-/*
-class TIA::AbstractMoveableTIAObject
-{
-	Int16 getPos()
-	{
-		return myPos; // this doesn't work???
-	}
-
-	void setPos(Int16 value)
-	{
-		myPos = value; // this doesn't work???
-	}
-};*/
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2630,6 +2720,7 @@ uInt8 TIA::AbstractPlayer::getState()
 void TIA::AbstractPlayer::handleRegisterUpdate(uInt8 addr, uInt8 value)
 {
 	AbstractMoveableTIAObject::handleRegisterUpdate(addr, value);
+
 	switch(addr)
 	{
 	}
@@ -2659,6 +2750,11 @@ void TIA::AbstractPlayer::handleDelayedGRP(uInt8 value)
 	handleEnabled(myCurrentGRP);
 }
 
+void TIA::AbstractPlayer::handleNUSIZ(uInt8 value)
+{
+	myNUSIZ = value;
+}
+
 void TIA::AbstractPlayer::handleREFP(uInt8 value)
 {
   // TODO: See if the reflection state of the player is being changed
@@ -2685,18 +2781,25 @@ void TIA::Player0::handleRegisterUpdate(uInt8 addr, uInt8 value)
 	AbstractPlayer::handleRegisterUpdate(addr, value);
 	switch(addr)
 	{
+		case HMP0:
+			handleHM(value);
+			break;
 		case GRP0:
 			handleGRP(value);
 			break;
 		case GRP1:
 			handleDelayedGRP(value);
 			break;
-		case VDELP0:
-			handleVDEL(value);
+		case NUSIZ0:
+			handleNUSIZ(value);
 			break;
 		case REFP0:
 			handleREFP(value);
 			break;
+		case VDELP0:
+			handleVDEL(value);
+			break;
+
 	}
 }
 
@@ -2712,17 +2815,23 @@ void TIA::Player1::handleRegisterUpdate(uInt8 addr, uInt8 value)
 	AbstractPlayer::handleRegisterUpdate(addr, value);
 	switch(addr)
 	{
+		case HMP1:
+			handleHM(value);
+			break;
 		case GRP1:
 			handleGRP(value);
 			break;
 		case GRP0:
 			handleDelayedGRP(value);
 			break;
-		case VDELP1:
-			handleVDEL(value);
+		case NUSIZ1:
+			handleNUSIZ(value);
 			break;
 		case REFP1:
 			handleREFP(value);
+			break;
+		case VDELP1:
+			handleVDEL(value);
 			break;
 	}
 }
@@ -2758,12 +2867,13 @@ void TIA::AbstractParticle::load(Serializer& in)
 void TIA::AbstractParticle::handleRegisterUpdate(uInt8 addr, uInt8 value)
 {
 	AbstractMoveableTIAObject::handleRegisterUpdate(addr, value);
+
 	switch(addr)
 	{
 	}
 }
 
-void TIA::AbstractParticle::handleEnable(uInt8 value)
+void TIA::AbstractParticle::handleENABLE(uInt8 value)
 {
   myENABLE = value & 0x02;
 }
@@ -2815,6 +2925,16 @@ void TIA::AbstractMissile::handleRegisterUpdate(uInt8 addr, uInt8 value)
 	}
 }
 
+void TIA::AbstractMissile::handleEnabled()
+{
+	TIA::AbstractTIAObject::handleEnabled(myENABLE && !myRESMP);
+}
+
+void TIA::AbstractMissile::handleNUSIZ(uInt8 value)
+{
+	myNUSIZ = value;
+}
+
 void TIA::AbstractMissile::handleRESMP(uInt8 value)
 {
   if(myRESMP && !(value & 0x02))
@@ -2831,7 +2951,7 @@ void TIA::AbstractMissile::handleRESMP(uInt8 value)
     if(myTia.myCurrentHMOVEPos != 0x7FFFFFFF)
     {
       myPos -= (8 - getMyPlayer().getMotionClock());
-      myPos += (8 - myTia.myMotionClockM0);
+      myPos += (8 - myTia.myMissile0.myMotionClock);
     }
     CLAMP_POS(myPos);
   }
@@ -2853,8 +2973,15 @@ void TIA::Missile0::handleRegisterUpdate(uInt8 addr, uInt8 value)
 	switch(addr)
 	{
   case ENAM0:
-		handleEnable(value);
+		handleENABLE(value);
+		handleEnabled();
     break;
+  case HMM0:
+		handleHM(value);
+		break;
+	case NUSIZ0:
+		handleNUSIZ(value);
+		break;
   case RESMP0:
     handleRESMP(value);
     break;
@@ -2875,8 +3002,15 @@ void TIA::Missile1::handleRegisterUpdate(uInt8 addr, uInt8 value)
 	switch(addr)
 	{
   case ENAM1:
-		handleEnable(value);
+		handleENABLE(value);
+		handleEnabled();
     break;
+  case HMM1:
+		handleHM(value);
+		break;
+	case NUSIZ1:
+		handleNUSIZ(value);
+		break;
   case RESMP1:
     handleRESMP(value);
     break;
@@ -2933,11 +3067,14 @@ void TIA::Ball::handleRegisterUpdate(uInt8 addr, uInt8 value)
 			handleCTRLPF(value);
 			break;
     case ENABL:
-			handleEnable(value);
+			handleENABLE(value);
       handleCurrentEnabled();
 			break;
     case GRP1:
 			handleGRP1(value);
+			break;
+		case HMBL:
+			handleHM(value);
 			break;
 		case VDELBL:
 			handleVDEL(value);

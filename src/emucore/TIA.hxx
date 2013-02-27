@@ -374,11 +374,11 @@ class TIA : public Device
     uInt8 dumpedInputPort(int resistance);
 
     // Write the specified value to the HMOVE registers at the given clock
-    void pokeHMP0(uInt8 value, Int32 clock);
+    /*void pokeHMP0(uInt8 value, Int32 clock);
     void pokeHMP1(uInt8 value, Int32 clock);
     void pokeHMM0(uInt8 value, Int32 clock);
     void pokeHMM1(uInt8 value, Int32 clock);
-    void pokeHMBL(uInt8 value, Int32 clock);
+    void pokeHMBL(uInt8 value, Int32 clock);*/
 
     // Apply motion to registers when HMOVE is currently active
     void applyActiveHMOVEMotion(int hpos, Int16& pos, Int32 motionClock);
@@ -455,8 +455,8 @@ class TIA : public Device
     uInt8 myVSYNC;        // Holds the VSYNC register value
     uInt8 myVBLANK;       // Holds the VBLANK register value
 
-    uInt8 myNUSIZ0;       // Number and size of player 0 and missle 0
-    uInt8 myNUSIZ1;       // Number and size of player 1 and missle 1
+    //uInt8 myNUSIZ0;       // Number and size of player 0 and missle 0
+    //uInt8 myNUSIZ1;       // Number and size of player 1 and missle 1
 
     //uInt8 myPlayfieldPriorityAndScore;
     uInt8 myPriorityEncoder[2][256];
@@ -483,18 +483,18 @@ class TIA : public Device
     //bool myENABL;         // Indicates if the ball is enabled
     //bool myDENABL;        // Indicates if the vertically delayed ball is enabled
 
-    uInt8 myHMP0;         // Player 0 horizontal motion register
-    uInt8 myHMP1;         // Player 1 horizontal motion register
-    uInt8 myHMM0;         // Missle 0 horizontal motion register
-    uInt8 myHMM1;         // Missle 1 horizontal motion register
-    uInt8 myHMBL;         // Ball horizontal motion register
+    //uInt8 myHMP0;         // Player 0 horizontal motion register
+    //uInt8 myHMP1;         // Player 1 horizontal motion register
+    //uInt8 myHMM0;         // Missle 0 horizontal motion register
+    //uInt8 myHMM1;         // Missle 1 horizontal motion register
+    //uInt8 myHMBL;         // Ball horizontal motion register
 
     //bool myVDELP0;        // Indicates if player 0 is being vertically delayed
     //bool myVDELP1;        // Indicates if player 1 is being vertically delayed
     //bool myVDELBL;        // Indicates if the ball is being vertically delayed
 
-    bool myRESMP0;        // Indicates if missle 0 is reset to player 0
-    bool myRESMP1;        // Indicates if missle 1 is reset to player 1
+    //bool myRESMP0;        // Indicates if missle 0 is reset to player 0
+    //bool myRESMP1;        // Indicates if missle 1 is reset to player 1
 
     uInt16 myCollision;     // Collision register
 
@@ -512,24 +512,24 @@ class TIA : public Device
     // on which the object's serial output should begin (0 to 159)
     //Int16 myPOSP0;        // Player 0 position register
     //Int16 myPOSP1;        // Player 1 position register
-    Int16 myPOSM0;        // Missle 0 position register
-    Int16 myPOSM1;        // Missle 1 position register
+    //Int16 myPOSM0;        // Missle 0 position register
+    //Int16 myPOSM1;        // Missle 1 position register
     //Int16 myPOSBL;        // Ball position register
 
     // The color clocks elapsed so far for each of the graphical objects,
     // as denoted by 'MOTCK' line described in A. Towers TIA Hardware Notes
     //Int32 myMotionClockP0;
     //Int32 myMotionClockP1;
-    Int32 myMotionClockM0;
-    Int32 myMotionClockM1;
+    //Int32 myMotionClockM0;
+    //Int32 myMotionClockM1;
     //Int32 myMotionClockBL;
 
     // Indicates 'start' signal for each of the graphical objects as
     // described in A. Towers TIA Hardware Notes
     //Int32 myStartP0;
     //Int32 myStartP1;
-    Int32 myStartM0;
-    Int32 myStartM1;
+    //Int32 myStartM0;
+    //Int32 myStartM1;
 
     // Index into the player mask arrays indicating whether display
     // of the first copy should be suppressed
@@ -540,9 +540,9 @@ class TIA : public Device
     // Hardware Notes
     //bool myHMP0mmr;
     //bool myHMP1mmr;
-    bool myHMM0mmr;
-    bool myHMM1mmr;
-    bool myHMBLmmr;
+    //bool myHMM0mmr;
+    //bool myHMM1mmr;
+    //bool myHMBLmmr;
 
     // Graphics for Player 0 that should be displayed.  This will be
     // reflected if the player is being reflected.
@@ -556,8 +556,8 @@ class TIA : public Device
     // mask pointers are always on a uInt32 boundary.  Otherwise,
     // the TIA code will fail on a good number of CPUs.
     //const uInt8* myP0Mask;
-    const uInt8* myM0Mask;
-    const uInt8* myM1Mask;
+    //const uInt8* myM0Mask;
+    //const uInt8* myM1Mask;
     //const uInt8* myP1Mask;
     //const uInt8* myBLMask;
     //const uInt32* myPFMask;
@@ -586,7 +586,7 @@ class TIA : public Device
     bool myTIAPinsDriven;
 
     // Bitmap of the objects that should be considered while drawing
-    uInt8 myEnabledObjects;
+    //uInt8 myEnabledObjects;
 
     // Determines whether specified bits (from TIABit) are enabled or disabled
     // This is and'ed with the enabled objects each scanline to mask out any
@@ -701,7 +701,7 @@ class TIA : public Device
 		virtual void handleRegisterUpdate(uInt8 addr, uInt8 value);
 
 		uInt8 getEnabled(uInt32 hpos) {
-      return (isEnabled && myMask[hpos]) ? getEnableBit() & myTia.myDisabledObjects : 0;
+      return (isEnabled && (getMaskValue() & myMask[hpos])) ? getEnableBit() & myTia.myDisabledObjects : 0;
     }
 		
     // getter:
@@ -713,7 +713,9 @@ class TIA : public Device
 		bool isHMmmr() const {return myHMmmr;};
 
   protected:
+		void handleHM(uInt8 value);
     void handleVDEL(uInt8 value);
+		virtual uInt8 getMaskValue() = 0;
 
 	public : // for now
 		uInt8 myHM;			// horizontal motion register
@@ -767,8 +769,10 @@ class TIA : public Device
 		// TODO: optization: only react if new value different from old one
 		void handleGRP(uInt8 value);
 		void handleDelayedGRP(uInt8 value);
+		void handleNUSIZ(uInt8 value);
 		void handleREFP(uInt8 value);
 		void handleVDEL(uInt8 value);
+		uInt8 getMaskValue() {return myCurrentGRP;}
 
 	private:
 		void handleCurrentGRP();
@@ -830,7 +834,8 @@ class TIA : public Device
 		bool isENABLE() {return myENABLE;}
 
 	protected:
-    void handleEnable(uInt8 value);
+    void handleENABLE(uInt8 value);
+		uInt8 getMaskValue() {return 0xff;}
 
   public:
     bool myENABLE;        // Indicates if particle is enabled
@@ -850,7 +855,9 @@ class TIA : public Device
 		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
 		void handleRegisterUpdate(uInt8 addr, uInt8 value);
   protected:
+		void handleNUSIZ(uInt8 value);
     void handleRESMP(uInt8 value);
+		void handleEnabled();
     virtual AbstractPlayer& getMyPlayer() = 0;
 
   public:      
