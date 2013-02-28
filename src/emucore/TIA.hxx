@@ -455,46 +455,10 @@ class TIA : public Device
     uInt8 myVSYNC;        // Holds the VSYNC register value
     uInt8 myVBLANK;       // Holds the VBLANK register value
 
-    //uInt8 myNUSIZ0;       // Number and size of player 0 and missle 0
-    //uInt8 myNUSIZ1;       // Number and size of player 1 and missle 1
-
-    //uInt8 myPlayfieldPriorityAndScore;
     uInt8 myPriorityEncoder[2][256];
     uInt32 myColor[8];
     uInt32 myFixedColor[8];
     uInt32* myColorPtr;
-
-    //uInt8 myCTRLPF;       // Playfield control register
-
-    //bool myREFP0;         // Indicates if player 0 is being reflected
-    //bool myREFP1;         // Indicates if player 1 is being reflected
-
-    //uInt32 myPF;          // Playfield graphics (19-12:PF2 11-4:PF1 3-0:PF0)
-
-    //uInt8 myGRP0;         // Player 0 graphics register
-    //uInt8 myGRP1;         // Player 1 graphics register
-    
-    //uInt8 myDGRP0;        // Player 0 delayed graphics register
-    //uInt8 myDGRP1;        // Player 1 delayed graphics register
-
-    //bool myENAM0;         // Indicates if missle 0 is enabled
-    //bool myENAM1;         // Indicates if missle 1 is enabled
-
-    //bool myENABL;         // Indicates if the ball is enabled
-    //bool myDENABL;        // Indicates if the vertically delayed ball is enabled
-
-    //uInt8 myHMP0;         // Player 0 horizontal motion register
-    //uInt8 myHMP1;         // Player 1 horizontal motion register
-    //uInt8 myHMM0;         // Missle 0 horizontal motion register
-    //uInt8 myHMM1;         // Missle 1 horizontal motion register
-    //uInt8 myHMBL;         // Ball horizontal motion register
-
-    //bool myVDELP0;        // Indicates if player 0 is being vertically delayed
-    //bool myVDELP1;        // Indicates if player 1 is being vertically delayed
-    //bool myVDELBL;        // Indicates if the ball is being vertically delayed
-
-    //bool myRESMP0;        // Indicates if missle 0 is reset to player 0
-    //bool myRESMP1;        // Indicates if missle 1 is reset to player 1
 
     uInt16 myCollision;     // Collision register
 
@@ -506,61 +470,6 @@ class TIA : public Device
     // This is necessary since there are 15 collision combinations which
     // are controlled by 6 objects
     uInt32 myCollisionEnabledMask;
-
-		
-    // Note that these position registers contain the color clock 
-    // on which the object's serial output should begin (0 to 159)
-    //Int16 myPOSP0;        // Player 0 position register
-    //Int16 myPOSP1;        // Player 1 position register
-    //Int16 myPOSM0;        // Missle 0 position register
-    //Int16 myPOSM1;        // Missle 1 position register
-    //Int16 myPOSBL;        // Ball position register
-
-    // The color clocks elapsed so far for each of the graphical objects,
-    // as denoted by 'MOTCK' line described in A. Towers TIA Hardware Notes
-    //Int32 myMotionClockP0;
-    //Int32 myMotionClockP1;
-    //Int32 myMotionClockM0;
-    //Int32 myMotionClockM1;
-    //Int32 myMotionClockBL;
-
-    // Indicates 'start' signal for each of the graphical objects as
-    // described in A. Towers TIA Hardware Notes
-    //Int32 myStartP0;
-    //Int32 myStartP1;
-    //Int32 myStartM0;
-    //Int32 myStartM1;
-
-    // Index into the player mask arrays indicating whether display
-    // of the first copy should be suppressed
-    //uInt8 mySuppressP0;
-    //uInt8 mySuppressP1;
-
-    // Latches for 'more motion required' as described in A. Towers TIA
-    // Hardware Notes
-    //bool myHMP0mmr;
-    //bool myHMP1mmr;
-    //bool myHMM0mmr;
-    //bool myHMM1mmr;
-    //bool myHMBLmmr;
-
-    // Graphics for Player 0 that should be displayed.  This will be
-    // reflected if the player is being reflected.
-    //uInt8 myCurrentGRP0;
-
-    // Graphics for Player 1 that should be displayed.  This will be
-    // reflected if the player is being reflected.
-    //uInt8 myCurrentGRP1;
-
-    // It's VERY important that the BL, M0, M1, P0 and P1 current
-    // mask pointers are always on a uInt32 boundary.  Otherwise,
-    // the TIA code will fail on a good number of CPUs.
-    //const uInt8* myP0Mask;
-    //const uInt8* myM0Mask;
-    //const uInt8* myM1Mask;
-    //const uInt8* myP1Mask;
-    //const uInt8* myBLMask;
-    //const uInt32* myPFMask;
 
     // Audio values; only used by TIADebug
     uInt8 myAUDV0, myAUDV1, myAUDC0, myAUDC1, myAUDF0, myAUDF1;
@@ -584,9 +493,6 @@ class TIA : public Device
     // Indicates if unused TIA pins are randomly driven high or low
     // Otherwise, they take on the value previously on the databus
     bool myTIAPinsDriven;
-
-    // Bitmap of the objects that should be considered while drawing
-    //uInt8 myEnabledObjects;
 
     // Determines whether specified bits (from TIABit) are enabled or disabled
     // This is and'ed with the enabled objects each scanline to mask out any
@@ -721,9 +627,9 @@ class TIA : public Device
 		uInt8 myHM;			// horizontal motion register
 		bool myVDEL;		// Indicates if object is being vertically delayed (not used for missiles)
 
-	    // Note that these position registers contain the color clock 
+	  // Note that these position registers contain the color clock 
 		// on which the object's serial output should begin (0 to 159)
-		Int16 myPos; 
+		Int16 myPos;    // object horizontal position register 
 
 	    // The color clocks elapsed so far for each of the graphical objects,
 		// as denoted by 'MOTCK' line described in A. Towers TIA Hardware Notes
@@ -731,7 +637,7 @@ class TIA : public Device
 
 		// Indicates 'start' signal for each of the graphical objects as
 		// described in A. Towers TIA Hardware Notes
-		Int32 myStart;
+		Int32 myStart; // unused
 
 		// Latches for 'more motion required' as described in A. Towers TIA
 		// Hardware Notes
@@ -779,18 +685,18 @@ class TIA : public Device
 
 	public : // for now
 		uInt8 myGRP;        // Player graphics register
-		uInt8 myNUSIZ;      // Number and size of player and missle 0
-		bool myREFP;		// Indicates if player is being reflected
+		uInt8 myNUSIZ;      // Number and size of player
+		bool myREFP;		    // Indicates if player is being reflected
 
 		// Index into the player mask arrays indicating whether display
 		// of the first copy should be suppressed
 		uInt8 mySuppress;
 
 		uInt8 myDGRP;       // Player delayed graphics register
+
 		// Graphics for Player that should be displayed.  This will be
 		// reflected if the player is being reflected.
-		uInt8 myCurrentGRP;
-		
+		uInt8 myCurrentGRP;		
 	};
 
 	class Player0 : public AbstractPlayer
@@ -862,7 +768,7 @@ class TIA : public Device
 
   public:      
 		uInt8 myNUSIZ;       // Number and size of missle
-    bool myRESMP;        // Indicates if missle is reset to player 
+    bool myRESMP;        // Indicates if missile is reset to player 
 	};
 
 	class Missile0 : public AbstractMissile 
