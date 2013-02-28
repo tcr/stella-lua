@@ -609,6 +609,9 @@ class TIA : public Device
 		uInt8 getEnabled(uInt32 hpos) {
       return (isEnabled && (getMaskValue() & myMask[hpos])) ? getEnableBit() & myTia.myDisabledObjects : 0;
     }
+
+		inline void handlePendingMotions();
+		virtual inline void updateMask() = 0;
 		
     // getter:
     uInt8 getHM() const {return myHM;}
@@ -672,6 +675,8 @@ class TIA : public Device
 		virtual uInt8 getState();
 		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
 		void handleRegisterUpdate(uInt8 addr, uInt8 value);
+
+		inline void updateMask();
 
     // getter
     uInt8 getGRP() const {return myGRP;};
@@ -773,6 +778,9 @@ class TIA : public Device
 		virtual uInt8 getState();
 		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
 		void handleRegisterUpdate(uInt8 addr, uInt8 value);
+
+		inline void updateMask();
+
   protected:
 		void handleNUSIZ(uInt8 value);
     void handleRESMP(uInt8 value);
@@ -837,6 +845,8 @@ class TIA : public Device
 		virtual uInt8 getState();
 		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
 		void handleRegisterUpdate(uInt8 addr, uInt8 value);
+
+		inline void updateMask();
 
 		// getter:
 		uInt8 getCTRLPF() {return myCTRLPF;}

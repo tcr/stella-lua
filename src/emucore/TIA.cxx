@@ -848,29 +848,22 @@ void TIA::updateFrame(Int32 clock)
       bool posChanged = false;
 
       // Apply pending motion clocks from a HMOVE initiated during the scanline
+			myPlayer0.handlePendingMotions();		// TODO: set posChanged
+			myPlayer1.handlePendingMotions();
+			myMissile0.handlePendingMotions();
+			myMissile1.handlePendingMotions();
+			myBall.handlePendingMotions();
+
       if(myCurrentHMOVEPos != 0x7FFFFFFF)
       {
         if(myCurrentHMOVEPos >= 97 && myCurrentHMOVEPos < 157)
         {
-          myPlayer0.myPos  -= myPlayer0.getMotionClock();  if(myPlayer0.getPos() < 0) myPlayer0.myPos += SCANLINE_PIXEL;
-          myPlayer1.myPos  -= myPlayer1.getMotionClock();  if(myPlayer1.getPos() < 0) myPlayer1.myPos += SCANLINE_PIXEL;
-          myMissile0.myPos -= myMissile0.myMotionClock;    if(myMissile0.myPos < 0)   myMissile0.myPos += SCANLINE_PIXEL;
-          myMissile1.myPos -= myMissile1.myMotionClock;    if(myMissile1.myPos < 0)   myMissile1.myPos += SCANLINE_PIXEL;
-          myBall.myPos     -= myBall.myMotionClock;        if(myBall.myPos < 0)       myBall.myPos += SCANLINE_PIXEL;
-
           myPreviousHMOVEPos = myCurrentHMOVEPos;
         }
         // Indicate that the HMOVE has been completed
         myCurrentHMOVEPos = 0x7FFFFFFF;
         posChanged = true;
       }
-
-      // Apply extra clocks for 'more motion required/mmr'
-      if(myPlayer0.myHMmmr) { myPlayer0.myPos -= 17;  if(myPlayer0.myPos < 0) myPlayer0.myPos += SCANLINE_PIXEL;  posChanged = true; }
-      if(myPlayer1.myHMmmr) { myPlayer1.myPos -= 17;  if(myPlayer1.myPos < 0) myPlayer1.myPos += SCANLINE_PIXEL;  posChanged = true; }
-      if(myMissile0.myHMmmr) { myMissile0.myPos -= 17;  if(myMissile0.myPos < 0) myMissile0.myPos += SCANLINE_PIXEL;  posChanged = true; }
-      if(myMissile1.myHMmmr) { myMissile1.myPos -= 17;  if(myMissile1.myPos < 0) myMissile1.myPos += SCANLINE_PIXEL;  posChanged = true; }
-      if(myBall.myHMmmr) { myBall.myPos -= 17;  if(myBall.myPos < 0) myBall.myPos += SCANLINE_PIXEL;  posChanged = true; }
 
       // TODO - handle changes to player timing
       if(posChanged)
@@ -935,72 +928,11 @@ void TIA::updateFrame(Int32 clock)
       else
       {
         // Update masks
-        myPlayer0.myMask = &TIATables::PxMask[myPlayer0.getPos() & 0x03]
-            [myPlayer0.getSuppress()][myPlayer0.myNUSIZ & 0x07][SCANLINE_PIXEL - (myPlayer0.getPos() & 0xFC)];
-        myPlayer1.myMask = &TIATables::PxMask[myPlayer1.getPos() & 0x03]
-            [myPlayer1.getSuppress()][myPlayer1.myNUSIZ & 0x07][SCANLINE_PIXEL - (myPlayer1.getPos() & 0xFC)];
-        myBall.myMask = &TIATables::BLMask[myBall.myPos & 0x03]
-            [(myBall.getCTRLPF() & 0x30) >> 4][SCANLINE_PIXEL - (myBall.myPos & 0xFC)];
-            
-
-        // TODO - 08-27-2009: Simulate the weird effects of Cosmic Ark and
-        // Stay Frosty.  The movement itself is well understood, but there
-        // also seems to be some widening and blanking occurring as well.
-        // This doesn't properly emulate the effect at a low level; it only
-        // simulates the behaviour as visually seen in the aforementioned
-        // ROMs.  Other ROMs may break this simulation; more testing is
-        // required to figure out what's really going on here.
-        if(myMissile0.myHMmmr)
-        {
-          switch(myMissile0.myPos % 4)
-          {
-            case 3:
-              // Stretch this missle so it's 2 pixels wide and shifted one
-              // pixel to the left
-              myMissile0.myMask = &TIATables::MxMask[(myMissile0.myPos-1) & 0x03]
-                  [myMissile0.myNUSIZ & 0x07][((myMissile0.myNUSIZ & 0x30) >> 4)|1]
-                  [SCANLINE_PIXEL - ((myMissile0.myPos-1) & 0xFC)];
-              break;
-            case 2:
-              // Missle is disabled on this line
-							myMissile0.myMask = &TIATables::DisabledMask[0];
-              break;
-            default:
-							myMissile0.myMask = &TIATables::MxMask[myMissile0.myPos & 0x03]
-                  [myMissile0.myNUSIZ & 0x07][(myMissile0.myNUSIZ & 0x30) >> 4]
-                  [SCANLINE_PIXEL - (myMissile0.myPos & 0xFC)];
-              break;
-          }
-        }
-        else
-          myMissile0.myMask = &TIATables::MxMask[myMissile0.myPos & 0x03]
-              [myMissile0.myNUSIZ & 0x07][(myMissile0.myNUSIZ & 0x30) >> 4][SCANLINE_PIXEL - (myMissile0.myPos & 0xFC)];
-
-        if(myMissile1.myHMmmr)
-        {
-          switch(myMissile1.myPos % 4)
-          {
-            case 3:
-              // Stretch this missle so it's 2 pixels wide and shifted one
-              // pixel to the left
-							myMissile1.myMask = &TIATables::MxMask[(myMissile1.myPos-1) & 0x03]
-                  [myMissile1.myNUSIZ & 0x07][((myMissile1.myNUSIZ & 0x30) >> 4)|1]
-                  [SCANLINE_PIXEL - ((myMissile1.myPos-1) & 0xFC)];
-              break;
-            case 2:
-              // Missle is disabled on this line
-              myMissile1.myMask = &TIATables::DisabledMask[0];
-              break;
-            default:
-              myMissile1.myMask = &TIATables::MxMask[myMissile1.myPos & 0x03]
-                  [myMissile1.myNUSIZ & 0x07][(myMissile1.myNUSIZ & 0x30) >> 4]
-                  [SCANLINE_PIXEL - (myMissile1.myPos & 0xFC)];
-              break;
-          }
-        }
-        else
-          myMissile1.myMask = &TIATables::MxMask[myMissile1.myPos & 0x03]
-              [myMissile1.myNUSIZ & 0x07][(myMissile1.myNUSIZ & 0x30) >> 4][SCANLINE_PIXEL - (myMissile1.myPos & 0xFC)];
+				myPlayer0.updateMask();
+				myPlayer1.updateMask();
+				myMissile0.updateMask();
+				myMissile1.updateMask();
+				myBall.updateMask();
 
         uInt32 hpos = clocksFromStartOfScanLine - HBLANK_CLOCKS;
         for(; myFramePointer < ending; ++myFramePointer, ++hpos)
@@ -2051,8 +1983,7 @@ void TIA::AbstractMoveableTIAObject::handleHMOVE()
   // active graphics latch?
   if(hpos + HBLANK_CLOCKS < HBLANK_CLOCKS && isHMmmr())
   {
-    // VBLANK??? Shouldn't that be HBLANK(_CLOCKS)???
-    Int16 cycle_fix = 17 - ((hpos + VBLANK + 7) / 4);
+		Int16 cycle_fix = 17 - ((hpos + HBLANK_CLOCKS + 7) / 4);
     
     myPos = (myPos + cycle_fix) % SCANLINE_PIXEL;
   }
@@ -2169,7 +2100,20 @@ void TIA::AbstractMoveableTIAObject::handleRESChange(Int32 newx)
   myPos = newx;
 }
 
+inline void TIA::AbstractMoveableTIAObject::handlePendingMotions()
+{
+      // Apply pending motion clocks from a HMOVE initiated during the scanline
+      if(myTia.myCurrentHMOVEPos != 0x7FFFFFFF)
+      {
+        if(myTia.myCurrentHMOVEPos >= 97 && myTia.myCurrentHMOVEPos < 157)
+        {
+          myPos -= myMotionClock; if(myPos < 0) myPos += SCANLINE_PIXEL;
+        }
+      }
 
+      // Apply extra clocks for 'more motion required/mmr'
+      if(myHMmmr) { myPos -= 17; if(myPos < 0) myPos += SCANLINE_PIXEL; /*posChanged = true;*/ }
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2321,6 +2265,12 @@ void TIA::AbstractPlayer::handleRESChange(Int32 newx)
   }
 
   TIA::AbstractMoveableTIAObject::handleRESChange(newx);
+}
+
+inline void TIA::AbstractPlayer::updateMask()
+{
+  myMask = &TIATables::PxMask[getPos() & 0x03]
+      [getSuppress()][myNUSIZ & 0x07][SCANLINE_PIXEL - (getPos() & 0xFC)];
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2528,6 +2478,42 @@ inline Int32 TIA::AbstractMissile::getPreviousHPos(Int32 hpos)
   return hpos < -1 ? 2 : ((hpos + 4) % SCANLINE_PIXEL);
 }
 
+// TODO - 08-27-2009: Simulate the weird effects of Cosmic Ark and
+// Stay Frosty.  The movement itself is well understood, but there
+// also seems to be some widening and blanking occurring as well.
+// This doesn't properly emulate the effect at a low level; it only
+// simulates the behaviour as visually seen in the aforementioned
+// ROMs.  Other ROMs may break this simulation; more testing is
+// required to figure out what's really going on here.
+inline void TIA::AbstractMissile::updateMask()
+{
+  if(myHMmmr)
+  {
+    switch(myPos % 4)
+    {
+      case 3:
+        // Stretch this missle so it's 2 pixels wide and shifted one
+        // pixel to the left
+        myMask = &TIATables::MxMask[(myPos-1) & 0x03]
+            [myNUSIZ & 0x07][((myNUSIZ & 0x30) >> 4)|1]
+            [SCANLINE_PIXEL - ((myPos-1) & 0xFC)];
+        break;
+      case 2:
+        // Missle is disabled on this line
+				myMask = &TIATables::DisabledMask[0];
+        break;
+      default:
+				myMask = &TIATables::MxMask[myPos & 0x03]
+            [myNUSIZ & 0x07][(myNUSIZ & 0x30) >> 4]
+            [SCANLINE_PIXEL - (myPos & 0xFC)];
+        break;
+    }
+  }
+  else
+    myMask = &TIATables::MxMask[myPos & 0x03]
+        [myNUSIZ & 0x07][(myNUSIZ & 0x30) >> 4][SCANLINE_PIXEL - (myPos & 0xFC)];
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TIA::Missile0::Missile0(const TIA& tia) : AbstractMissile(tia)
@@ -2689,4 +2675,10 @@ inline Int32 TIA::Ball::getActiveHPos(Int32 hpos)
 inline Int32 TIA::Ball::getPreviousHPos(Int32 hpos)
 {
   return hpos < 0 ? 2 : ((hpos + 4) % SCANLINE_PIXEL);
+}
+
+inline void TIA::Ball::updateMask()
+{
+  myMask = &TIATables::BLMask[myPos & 0x03]
+      [(myCTRLPF & 0x30) >> 4][SCANLINE_PIXEL - (myPos & 0xFC)];
 }
