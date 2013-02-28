@@ -1340,8 +1340,6 @@ bool TIA::poke(uInt16 addr, uInt8 value)
 
 			myPlayer1.handleRegisterUpdate(addr, value);
 			myMissile1.handleRegisterUpdate(addr, value);
-
-			myPlayer1.mySuppress = 0;      
       break;
     }
 
@@ -1527,110 +1525,19 @@ bool TIA::poke(uInt16 addr, uInt8 value)
 
     case RESM0:   // Reset Missle 0
     {
-      Int32 hpos = (clock - myClockWhenFrameStarted) % SCANLINE_CLOCKS - HBLANK_CLOCKS;
-      Int16 newx;
-
-      // Check if HMOVE is currently active
-      if(myCurrentHMOVEPos != 0x7FFFFFFF)
-      {
-        newx = hpos < 7 ? 2 : ((hpos + 4) % SCANLINE_PIXEL);
-        // If HMOVE is active, adjust for any remaining horizontal move clocks
-        applyActiveHMOVEMotion(hpos, newx, myMissile0.myMotionClock);
-      }
-      else
-      {
-        newx = hpos < -1 ? 2 : ((hpos + 4) % SCANLINE_PIXEL);
-        applyPreviousHMOVEMotion(hpos, newx, myMissile0.myHM);
-      }
-      if(newx != myMissile0.myPos)
-      {
-        myMissile0.myPos = newx;
-      }
+      myMissile0.handleRegisterUpdate(addr, value);
       break;
     }
 
     case RESM1:   // Reset Missle 1
     {
-      Int32 hpos = (clock - myClockWhenFrameStarted) % SCANLINE_CLOCKS - HBLANK_CLOCKS;
-      Int16 newx;
-
-      // Check if HMOVE is currently active
-      if(myCurrentHMOVEPos != 0x7FFFFFFF)
-      {
-        newx = hpos < 7 ? 2 : ((hpos + 4) % SCANLINE_PIXEL);
-        // If HMOVE is active, adjust for any remaining horizontal move clocks
-        applyActiveHMOVEMotion(hpos, newx, myMissile1.myMotionClock);
-      }
-      else
-      {
-        newx = hpos < -1 ? 2 : ((hpos + 4) % SCANLINE_PIXEL);
-        applyPreviousHMOVEMotion(hpos, newx, myMissile1.myHM);
-      }
-      if(newx != myMissile1.myPos)
-      {
-        myMissile1.myPos = newx;
-      }
+      myMissile1.handleRegisterUpdate(addr, value);
       break;
     }
 
     case RESBL:   // Reset Ball
     {
-      Int32 hpos = (clock - myClockWhenFrameStarted) % SCANLINE_CLOCKS - HBLANK_CLOCKS;
-
-      // Check if HMOVE is currently active
-      if(myCurrentHMOVEPos != 0x7FFFFFFF)
-      {
-        myBall.myPos = hpos < 7 ? 2 : ((hpos + 4) % SCANLINE_PIXEL);
-        // If HMOVE is active, adjust for any remaining horizontal move clocks
-        applyActiveHMOVEMotion(hpos, myBall.myPos, myBall.myMotionClock);
-      }
-      else
-      {
-        myBall.myPos = hpos < 0 ? 2 : ((hpos + 4) % SCANLINE_PIXEL);
-        applyPreviousHMOVEMotion(hpos, myBall.myPos, myBall.myHM);
-      }
-      break;
-    }
-
-    case AUDC0:   // Audio control 0
-    {
-      myAUDC0 = value & 0x0f;
-      mySound.set(addr, value, mySystem->cycles());
-      break;
-    }
-  
-    case AUDC1:   // Audio control 1
-    {
-      myAUDC1 = value & 0x0f;
-      mySound.set(addr, value, mySystem->cycles());
-      break;
-    }
-  
-    case AUDF0:   // Audio frequency 0
-    {
-      myAUDF0 = value & 0x1f;
-      mySound.set(addr, value, mySystem->cycles());
-      break;
-    }
-  
-    case AUDF1:   // Audio frequency 1
-    {
-      myAUDF1 = value & 0x1f;
-      mySound.set(addr, value, mySystem->cycles());
-      break;
-    }
-  
-    case AUDV0:   // Audio volume 0
-    {
-      myAUDV0 = value & 0x0f;
-      mySound.set(addr, value, mySystem->cycles());
-      break;
-    }
-  
-    case AUDV1:   // Audio volume 1
-    {
-      myAUDV1 = value & 0x0f;
-      mySound.set(addr, value, mySystem->cycles());
+      myBall.handleRegisterUpdate(addr, value);
       break;
     }
 
@@ -1748,83 +1655,18 @@ bool TIA::poke(uInt16 addr, uInt8 value)
       myHMOVEBlankEnabled = myAllowHMOVEBlanks ? 
         TIATables::HMOVEBlankEnableCycles[((clock - myClockWhenFrameStarted) % SCANLINE_CLOCKS) / PIXEL_CLOCKS] : false;
 
-      // Do we have to undo some of the already applied cycles from an
-      // active graphics latch?
-      if(hpos + HBLANK_CLOCKS < 17 * 4)
-      {
-        Int16 cycle_fix = 17 - ((hpos + VBLANK + 7) / 4);
-        if(myPlayer0.isHMmmr())  myPlayer0.myPos = (myPlayer0.getPos() + cycle_fix) % SCANLINE_PIXEL;
-        if(myPlayer1.isHMmmr())  myPlayer1.myPos = (myPlayer1.getPos() + cycle_fix) % SCANLINE_PIXEL;
-        if(myMissile0.myHMmmr)  myMissile0.myPos = (myMissile0.myPos + cycle_fix) % SCANLINE_PIXEL;
-        if(myMissile1.myHMmmr)  myMissile1.myPos = (myMissile1.myPos + cycle_fix) % SCANLINE_PIXEL;
-        if(myBall.myHMmmr)  myBall.myPos = (myBall.myPos + cycle_fix) % SCANLINE_PIXEL;        
-      }
-      myPlayer0.myHMmmr = myPlayer1.myHMmmr = myMissile0.myHMmmr = myMissile1.myHMmmr = myBall.myHMmmr = false;
+      myPlayer0.handleRegisterUpdate(addr, 0);
+      myPlayer1.handleRegisterUpdate(addr, 0);
+      myMissile0.handleRegisterUpdate(addr, 0);
+      myMissile1.handleRegisterUpdate(addr, 0);
+      myBall.handleRegisterUpdate(addr, 0);
 
       // Can HMOVE activities be ignored?
       if(hpos >= -5 && hpos < 97 )
       {
-        myPlayer0.myMotionClock = 0;
-        myPlayer1.myMotionClock = 0;
-        myMissile0.myMotionClock = 0;
-        myMissile1.myMotionClock = 0;
-        myBall.myMotionClock = 0;
         myHMOVEBlankEnabled = false;
         myCurrentHMOVEPos = 0x7FFFFFFF;
-        break;
       }
-
-      myPlayer0.myMotionClock = (myPlayer0.myHM ^ 0x80) >> 4;
-      myPlayer1.myMotionClock = (myPlayer1.myHM ^ 0x80) >> 4;
-      myMissile0.myMotionClock = (myMissile0.myHM ^ 0x80) >> 4;
-      myMissile1.myMotionClock = (myMissile1.myHM ^ 0x80) >> 4;
-      myBall.myMotionClock = (myBall.myHM ^ 0x80) >> 4;
-
-      // Adjust number of graphics motion clocks for active display
-      if(hpos >= 97 && hpos < 151)
-      {
-        Int16 skip_motclks = (SCANLINE_PIXEL - myCurrentHMOVEPos - 6) >> 2;
-        myPlayer0.myMotionClock  -= skip_motclks;
-        myPlayer1.myMotionClock  -= skip_motclks;
-        myMissile0.myMotionClock -= skip_motclks;
-        myMissile1.myMotionClock -= skip_motclks;
-        myBall.myMotionClock     -= skip_motclks;
-        if(myPlayer0.getMotionClock() < 0)  myPlayer0.myMotionClock = 0;
-        if(myPlayer1.getMotionClock() < 0)  myPlayer1.myMotionClock = 0;
-        if(myMissile0.myMotionClock   < 0)  myMissile0.myMotionClock = 0;
-        if(myMissile1.myMotionClock   < 0)  myMissile1.myMotionClock = 0;
-        if(myBall.myMotionClock       < 0)  myBall.myMotionClock = 0;
-      }
-
-      if(hpos >= -56 && hpos < -5)
-      {
-        Int16 max_motclks = (7 - (myCurrentHMOVEPos + 5)) >> 2;
-        if(myPlayer0.getMotionClock() > max_motclks)  myPlayer0.myMotionClock = max_motclks;
-        if(myPlayer1.getMotionClock() > max_motclks)  myPlayer1.myMotionClock = max_motclks;
-        if(myMissile0.myMotionClock   > max_motclks)  myMissile0.myMotionClock = max_motclks;
-        if(myMissile1.myMotionClock   > max_motclks)  myMissile1.myMotionClock = max_motclks;
-        if(myBall.myMotionClock       > max_motclks)  myBall.myMotionClock = max_motclks;
-      }
-
-      // Apply horizontal motion
-      if(hpos < -5 || hpos >= 157)
-      {
-        myPlayer0.myPos  += 8 - myPlayer0.getMotionClock();
-        myPlayer1.myPos  += 8 - myPlayer1.getMotionClock();
-        myMissile0.myPos += 8 - myMissile0.myMotionClock;
-        myMissile1.myPos += 8 - myMissile1.myMotionClock;
-        myBall.myPos     += 8 - myBall.myMotionClock;
-      }
-
-      // Make sure positions are in range
-      CLAMP_POS(myPlayer0.myPos);
-      CLAMP_POS(myPlayer1.myPos);
-      CLAMP_POS(myMissile0.myPos);
-      CLAMP_POS(myMissile1.myPos);
-      CLAMP_POS(myBall.myPos);
-
-      // TODO - handle late HMOVE's
-      myPlayer0.mySuppress = myPlayer1.mySuppress = 0;
       break;
     }
 
@@ -1841,6 +1683,48 @@ bool TIA::poke(uInt16 addr, uInt8 value)
     case CXCLR:   // Clear collision latches
     {
       myCollision = 0;
+      break;
+    }
+
+    case AUDC0:   // Audio control 0
+    {
+      myAUDC0 = value & 0x0f;
+      mySound.set(addr, value, mySystem->cycles());
+      break;
+    }
+  
+    case AUDC1:   // Audio control 1
+    {
+      myAUDC1 = value & 0x0f;
+      mySound.set(addr, value, mySystem->cycles());
+      break;
+    }
+  
+    case AUDF0:   // Audio frequency 0
+    {
+      myAUDF0 = value & 0x1f;
+      mySound.set(addr, value, mySystem->cycles());
+      break;
+    }
+  
+    case AUDF1:   // Audio frequency 1
+    {
+      myAUDF1 = value & 0x1f;
+      mySound.set(addr, value, mySystem->cycles());
+      break;
+    }
+  
+    case AUDV0:   // Audio volume 0
+    {
+      myAUDV0 = value & 0x0f;
+      mySound.set(addr, value, mySystem->cycles());
+      break;
+    }
+  
+    case AUDV1:   // Audio volume 1
+    {
+      myAUDV1 = value & 0x0f;
+      mySound.set(addr, value, mySystem->cycles());
       break;
     }
 
@@ -2087,7 +1971,15 @@ void TIA::AbstractMoveableTIAObject::handleRegisterUpdate(uInt8 addr, uInt8 valu
 	case HMCLR:
 		handleHM(value);
 		break;
+  case HMOVE:
+    handleHMOVE();
+    break;
 	}
+}
+
+void TIA::AbstractMoveableTIAObject::handleVDEL(uInt8 value)
+{
+	myVDEL = value & 0x01;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2118,11 +2010,11 @@ void TIA::AbstractMoveableTIAObject::handleRegisterUpdate(uInt8 addr, uInt8 valu
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TIA::AbstractMoveableTIAObject::handleHM(uInt8 value)
 {
-	Int32 clock = myTia.mySystem->cycles() * PIXEL_CLOCKS;
-  value &= 0xF0;
+	value &= 0xF0;
   if(myHM == value)
     return;
 
+  Int32 clock = myTia.mySystem->cycles() * PIXEL_CLOCKS;
   int hpos  = (clock - myTia.myClockWhenFrameStarted) % SCANLINE_CLOCKS - HBLANK_CLOCKS;
 
   // Check if HMOVE is currently active
@@ -2150,11 +2042,134 @@ void TIA::AbstractMoveableTIAObject::handleHM(uInt8 value)
   myHM = value;
 }
 
-
-void TIA::AbstractMoveableTIAObject::handleVDEL(uInt8 value)
+void TIA::AbstractMoveableTIAObject::handleHMOVE()
 {
-	myVDEL = value & 0x01;
+  Int32 clock = myTia.mySystem->cycles() * PIXEL_CLOCKS;
+  int hpos = (clock - myTia.myClockWhenFrameStarted) % SCANLINE_CLOCKS - HBLANK_CLOCKS;
+
+  // Do we have to undo some of the already applied cycles from an
+  // active graphics latch?
+  if(hpos + HBLANK_CLOCKS < HBLANK_CLOCKS && isHMmmr())
+  {
+    // VBLANK??? Shouldn't that be HBLANK(_CLOCKS)???
+    Int16 cycle_fix = 17 - ((hpos + VBLANK + 7) / 4);
+    
+    myPos = (myPos + cycle_fix) % SCANLINE_PIXEL;
+  }
+  myHMmmr = false;
+
+  // Can HMOVE activities be ignored?
+  if(hpos >= -5 && hpos < 97 )
+  {
+    myMotionClock = 0;
+  }
+  else
+  {
+    myMotionClock = (myHM ^ 0x80) >> 4;
+
+    // Adjust number of graphics motion clocks for active display
+    if(hpos >= 97 && hpos < 151)
+    {
+      Int16 skip_motclks = (SCANLINE_PIXEL - hpos - 6) >> 2;
+      
+      myMotionClock -= skip_motclks;
+      if(myMotionClock < 0) myMotionClock = 0;
+    }
+
+    if(hpos >= -56 && hpos < -5)
+    {
+      Int16 max_motclks = (7 - (hpos + 5)) >> 2;
+      
+      if(myMotionClock > max_motclks) myMotionClock = max_motclks;
+    }
+
+    // Apply horizontal motion
+    if(hpos < -5 || hpos >= 157)
+    {
+      myPos += 8 - myMotionClock;
+    }
+
+    // Make sure position is in range
+    CLAMP_POS(myPos);
+
+    // TODO - handle late HMOVE's
+  }
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// The following two methods apply extra clocks when a horizontal motion
+// register (HMxx) is modified during an HMOVE, before waiting for the
+// documented time of at least 24 CPU cycles.  The applicable explanation
+// from A. Towers Hardware Notes is as follows:
+//
+//   In theory then the side effects of modifying the HMxx registers
+//   during HMOVE should be quite straight-forward. If the internal
+//   counter has not yet reached the value in HMxx, a new value greater
+//   than this (in 0-15 terms) will work normally. Conversely, if
+//   the counter has already reached the value in HMxx, new values
+//   will have no effect because the latch will have been cleared.
+//
+// Most of the ideas in these methods come from MESS.
+// (used with permission from Wilbert Pol)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+inline void TIA::AbstractMoveableTIAObject::applyActiveHMOVEMotion(int hpos, Int16& pos)
+{
+  if(hpos < BSPF_min(myTia.myCurrentHMOVEPos + 6 + 16 * 4, 7))
+  {
+    Int32 decrements_passed = (hpos - (myTia.myCurrentHMOVEPos + 4)) >> 2;
+    pos += 8;
+    if((myMotionClock - decrements_passed) > 0)
+    {
+      pos -= (myMotionClock - decrements_passed);
+      if(pos < 0) pos += SCANLINE_PIXEL;
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+inline void TIA::AbstractMoveableTIAObject::applyPreviousHMOVEMotion(int hpos, Int16& pos)
+{
+  if(myTia.myPreviousHMOVEPos != 0x7FFFFFFF)
+  {
+    uInt8 motclk = (myHM ^ 0x80) >> 4;
+    if(hpos <= myTia.myPreviousHMOVEPos - SCANLINE_CLOCKS + 5 + motclk * 4)
+    {
+      uInt8 motclk_passed = (hpos - (myTia.myPreviousHMOVEPos - SCANLINE_CLOCKS + 6)) >> 2;
+      pos -= (motclk - motclk_passed);
+    }
+  }
+}
+
+void TIA::AbstractMoveableTIAObject::handleRES()
+{
+  Int32 clock = myTia.mySystem->cycles() * PIXEL_CLOCKS;
+  Int32 hpos = (clock - myTia.myClockWhenFrameStarted) % SCANLINE_CLOCKS - HBLANK_CLOCKS;
+  Int16 newx;
+
+  // Check if HMOVE is currently active
+  if(myTia.myCurrentHMOVEPos != 0x7FFFFFFF)
+  {
+    newx = getActiveHPos(hpos);
+    // If HMOVE is active, adjust for any remaining horizontal move clocks
+    applyActiveHMOVEMotion(hpos, newx);
+  }
+  else
+  {
+    newx = getPreviousHPos(hpos);
+    applyPreviousHMOVEMotion(hpos, newx);
+  }
+  if(newx != myPos)
+  {
+    handleRESChange(newx);
+  }
+}
+
+void TIA::AbstractMoveableTIAObject::handleRESChange(Int32 newx)
+{
+  myPos = newx;
+}
+
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2239,6 +2254,13 @@ void TIA::AbstractPlayer::handleDelayedGRP(uInt8 value)
 	handleEnabled(myCurrentGRP);
 }
 
+void TIA::AbstractPlayer::handleHMOVE()
+{
+  TIA::AbstractMoveableTIAObject::handleHMOVE();
+  // TODO - handle late HMOVE's
+  mySuppress = 0;
+}
+
 void TIA::AbstractPlayer::handleNUSIZ(uInt8 value)
 {
 	myNUSIZ = value;
@@ -2257,6 +2279,48 @@ void TIA::AbstractPlayer::handleVDEL(uInt8 value)
 
 	handleCurrentGRP();
 	handleEnabled(myCurrentGRP);
+}
+
+inline Int32 TIA::AbstractPlayer::getActiveHPos(Int32 hpos)
+{
+  return hpos < 7 ? 3 : ((hpos + 5) % SCANLINE_PIXEL);
+}
+
+inline Int32 TIA::AbstractPlayer::getPreviousHPos(Int32 hpos)
+{
+  return hpos < -2 ? 3 : ((hpos + 5) % SCANLINE_PIXEL);
+}
+
+void TIA::AbstractPlayer::handleRESChange(Int32 newx)
+{
+  // TODO - update player timing
+
+  // Find out under what condition the player is being reset
+  Int16 delay = TIATables::PxPosResetWhen[myNUSIZ & 7][myPos][newx];
+
+  switch(delay)
+  {
+    // Player is being reset during the display of one of its copies
+    case 1:
+      // TODO - 08-20-2009: determine whether we really need to update
+      // the frame here, and also come up with a way to eliminate the
+      // 200KB PxPosResetWhen table.
+      //updateFrame(clock + 11); <-- !!!
+      mySuppress = 1;
+      break;
+
+    // Player is being reset in neither the delay nor display section
+    case 0:
+      mySuppress = 1;
+      break;
+
+    // Player is being reset during the delay section of one of its copies
+    case -1:
+      mySuppress = 0;
+      break;
+  }
+
+  TIA::AbstractMoveableTIAObject::handleRESChange(newx);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2281,10 +2345,14 @@ void TIA::Player0::handleRegisterUpdate(uInt8 addr, uInt8 value)
 			break;
 		case NUSIZ0:
 			handleNUSIZ(value);
+      mySuppress = 0;
 			break;
 		case REFP0:
 			handleREFP(value);
 			break;
+    /*case RESP0:
+      handleRES();
+      break;*/
 		case VDELP0:
 			handleVDEL(value);
 			break;
@@ -2314,10 +2382,14 @@ void TIA::Player1::handleRegisterUpdate(uInt8 addr, uInt8 value)
 			break;
 		case NUSIZ1:
 			handleNUSIZ(value);
+      mySuppress = 0;
 			break;
 		case REFP1:
 			handleREFP(value);
 			break;
+    /*case RESP1:
+      handleRES();
+      break;*/
 		case VDELP1:
 			handleVDEL(value);
 			break;
@@ -2446,6 +2518,16 @@ void TIA::AbstractMissile::handleRESMP(uInt8 value)
   myRESMP = value & 0x02;
 }
 
+inline Int32 TIA::AbstractMissile::getActiveHPos(Int32 hpos)
+{
+  return hpos < 7 ? 2 : ((hpos + 4) % SCANLINE_PIXEL);
+}
+
+inline Int32 TIA::AbstractMissile::getPreviousHPos(Int32 hpos)
+{
+  return hpos < -1 ? 2 : ((hpos + 4) % SCANLINE_PIXEL);
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TIA::Missile0::Missile0(const TIA& tia) : AbstractMissile(tia)
@@ -2469,6 +2551,9 @@ void TIA::Missile0::handleRegisterUpdate(uInt8 addr, uInt8 value)
 	case NUSIZ0:
 		handleNUSIZ(value);
 		break;
+  case RESM0:
+    handleRES();
+    break;
   case RESMP0:
     handleRESMP(value);
     break;
@@ -2498,6 +2583,9 @@ void TIA::Missile1::handleRegisterUpdate(uInt8 addr, uInt8 value)
 	case NUSIZ1:
 		handleNUSIZ(value);
 		break;
+  case RESM1:
+    handleRES();
+    break;
   case RESMP1:
     handleRESMP(value);
     break;
@@ -2563,6 +2651,9 @@ void TIA::Ball::handleRegisterUpdate(uInt8 addr, uInt8 value)
 		case HMBL:
 			handleHM(value);
 			break;
+    case RESBL:   // Reset Ball
+      handleRES();
+      break;
 		case VDELBL:
 			handleVDEL(value);
       handleCurrentEnabled();
@@ -2586,4 +2677,16 @@ void TIA::Ball::handleGRP1(uInt8 value)
   // Copy ball graphics into its delayed register
   myDENABLE = myENABLE;
   handleCurrentEnabled();
+  uInt8 hpos = 0;
+  uInt8 newx = 0;  
+}
+
+inline Int32 TIA::Ball::getActiveHPos(Int32 hpos)
+{
+  return hpos < 7 ? 2 : ((hpos + 4) % SCANLINE_PIXEL);
+}
+
+inline Int32 TIA::Ball::getPreviousHPos(Int32 hpos)
+{
+  return hpos < 0 ? 2 : ((hpos + 4) % SCANLINE_PIXEL);
 }

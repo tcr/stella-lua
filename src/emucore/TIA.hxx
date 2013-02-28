@@ -552,7 +552,7 @@ class TIA : public Device
 
 	protected:
     void handleEnabled(uInt32 value);
-		virtual uInt8 getEnableBit() = 0;
+		virtual inline uInt8 getEnableBit() = 0;
     
 		const TIA& myTia;
 		bool isEnabled;
@@ -581,8 +581,8 @@ class TIA : public Device
 
 	protected:
     void handleCTRLPF(uInt8 value);
-		uInt32 getMaskValue() {return myPF;}
-		uInt8 getEnableBit() {return PFBit;}
+		inline uInt32 getMaskValue() {return myPF;}
+		inline uInt8 getEnableBit() {return PFBit;}
 	
 	public:
     uInt8 myCTRLPF;       // Playfield control register
@@ -620,8 +620,17 @@ class TIA : public Device
 
   protected:
 		void handleHM(uInt8 value);
+    void handleHMOVE();
+    void handleRES();
     void handleVDEL(uInt8 value);
-		virtual uInt8 getMaskValue() = 0;
+    
+		inline virtual uInt8 getMaskValue() = 0;
+
+    inline void applyActiveHMOVEMotion(int hpos, Int16& pos);
+    inline void applyPreviousHMOVEMotion(int hpos, Int16& pos);
+    virtual inline Int32 getActiveHPos(Int32 hpos) = 0;
+    virtual inline Int32 getPreviousHPos(Int32 hpos) = 0;
+    void handleRESChange(Int32 newx);
 
 	public : // for now
 		uInt8 myHM;			// horizontal motion register
@@ -675,13 +684,17 @@ class TIA : public Device
 		// TODO: optization: only react if new value different from old one
 		void handleGRP(uInt8 value);
 		void handleDelayedGRP(uInt8 value);
+    void handleHMOVE();
 		void handleNUSIZ(uInt8 value);
 		void handleREFP(uInt8 value);
 		void handleVDEL(uInt8 value);
-		uInt8 getMaskValue() {return myCurrentGRP;}
+		inline uInt8 getMaskValue() {return myCurrentGRP;}
 
 	private:
 		void handleCurrentGRP();
+    inline Int32 getActiveHPos(Int32 hpos);
+    inline Int32 getPreviousHPos(Int32 hpos);
+    void handleRESChange(Int32 newx);
 
 	public : // for now
 		uInt8 myGRP;        // Player graphics register
@@ -708,7 +721,7 @@ class TIA : public Device
 		void handleRegisterUpdate(uInt8 addr, uInt8 value);
 
 	protected:
-		uInt8 getEnableBit() {return P0Bit;}
+		inline uInt8 getEnableBit() {return P0Bit;}
 	};
 
 	class Player1 : public AbstractPlayer
@@ -720,7 +733,7 @@ class TIA : public Device
 		void handleRegisterUpdate(uInt8 addr, uInt8 value);
 
 	protected:
-		uInt8 getEnableBit() {return P1Bit;}
+		inline uInt8 getEnableBit() {return P1Bit;}
 	};
 
 	class AbstractParticle : public AbstractMoveableTIAObject
@@ -765,6 +778,8 @@ class TIA : public Device
     void handleRESMP(uInt8 value);
 		void handleEnabled();
     virtual AbstractPlayer& getMyPlayer() = 0;
+    inline Int32 getActiveHPos(Int32 hpos);
+    inline Int32 getPreviousHPos(Int32 hpos);
 
   public:      
 		uInt8 myNUSIZ;       // Number and size of missle
@@ -786,7 +801,7 @@ class TIA : public Device
 		void handleRegisterUpdate(uInt8 addr, uInt8 value);
 
 	protected:
-		uInt8 getEnableBit() {return M0Bit;}		
+		inline uInt8 getEnableBit() {return M0Bit;}		
     AbstractPlayer& getMyPlayer() {return myTia.getPlayer0();}
 	};
 
@@ -805,7 +820,7 @@ class TIA : public Device
 		void handleRegisterUpdate(uInt8 addr, uInt8 value);
 
 	protected:
-		uInt8 getEnableBit() {return M1Bit;}
+		inline uInt8 getEnableBit() {return M1Bit;}
     AbstractPlayer& getMyPlayer() {return myTia.getPlayer1();}
 	};
 
@@ -827,10 +842,12 @@ class TIA : public Device
 		uInt8 getCTRLPF() {return myCTRLPF;}
 
 	protected:			
-		uInt8 getEnableBit() {return BLBit;}
+		inline uInt8 getEnableBit() {return BLBit;}
     void handleCTRLPF(uInt8 value);
     void handleGRP1(uInt8 value);
     void handleCurrentEnabled();
+    inline Int32 getActiveHPos(Int32 hpos);
+    inline Int32 getPreviousHPos(Int32 hpos);
 
   public: // for now
     bool myDENABLE;     // Indicates if the vertically delayed ball is enabled
