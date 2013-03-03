@@ -73,7 +73,8 @@ TIA::TIA(Console& console, Sound& sound, Settings& settings)
     myMissile0(*this),
     myMissile1(*this),
     myBall(*this),
-    myPlayfield(*this)
+    myPlayfield(*this),
+		myBackground(*this)
 {
   // Allocate buffers for two frame buffers
   myCurrentFrameBuffer = new uInt8[BUFFER_SIZE];
@@ -897,7 +898,7 @@ void TIA::updateFrame(Int32 clock)
 
         uInt32 hpos = clocksFromStartOfScanLine - HBLANK_CLOCKS;
         for(; myFramePointer < ending; ++myFramePointer, ++hpos) {
-					uInt8 enabled = myPlayfield.getEnabled(hpos);
+					uInt8 enabled = myPlayfield.getEnabled(hpos);					
           enabled |= myBall.getEnabled(hpos);
 					enabled |= myPlayer1.getEnabled(hpos);
 					enabled |= myMissile1.getEnabled(hpos);
@@ -906,7 +907,7 @@ void TIA::updateFrame(Int32 clock)
 
           myCollision |= TIATables::CollisionMask[enabled];
           *myFramePointer = myColorPtr[myPriorityEncoder[hpos < SCANLINE_PIXEL/2 ? 0 : 1]
-						[enabled | myPlayfield.getPriorityAndScore()]];
+							[enabled | myPlayfield.getPriorityAndScore()]];
         }
       }
     } // clocksToUpdate != 0
@@ -1233,56 +1234,35 @@ bool TIA::poke(uInt16 addr, uInt8 value)
 
     case COLUP0:  // Color-Luminance Player 0
     {
-			//myPlayer0.handleRegisterUpdate(addr, value);
-			//myMissile0.handleRegisterUpdate(addr, value);
-
-      uInt32 color = (uInt32)(value & 0xfe);
-      if(myColorLossEnabled && (myScanlineCountForLastFrame & 0x01))
-      {
-        color |= 0x01;
-      }
-      myColor[P0Color] = myColor[M0Color] =
-          (((((color << 8) | color) << 8) | color) << 8) | color;
+			myPlayer0.handleRegisterUpdate(addr, value);
+			myMissile0.handleRegisterUpdate(addr, value);
+			myColor[P0Color] = myPlayer0.getColor();
+			myColor[M0Color] = myMissile0.getColor();
       break;
     }
 
     case COLUP1:  // Color-Luminance Player 1
     {
-			//myPlayer1.handleRegisterUpdate(addr, value);
-			//myMissile1.handleRegisterUpdate(addr, value);
-
-      uInt32 color = (uInt32)(value & 0xfe);
-      if(myColorLossEnabled && (myScanlineCountForLastFrame & 0x01))
-      {
-        color |= 0x01;
-      }
-      myColor[P1Color] = myColor[M1Color] =
-          (((((color << 8) | color) << 8) | color) << 8) | color;
+			myPlayer1.handleRegisterUpdate(addr, value);
+			myMissile1.handleRegisterUpdate(addr, value);
+			myColor[P1Color] = myPlayer1.getColor();
+			myColor[M1Color] = myMissile1.getColor();
       break;
     }
 
     case COLUPF:  // Color-Luminance Playfield
     {
-			//myPlayfield.handleRegisterUpdate(addr, value);
-
-      uInt32 color = (uInt32)(value & 0xfe);
-      if(myColorLossEnabled && (myScanlineCountForLastFrame & 0x01))
-      {
-        color |= 0x01;
-      }
-      myColor[PFColor] = myColor[BLColor] =
-          (((((color << 8) | color) << 8) | color) << 8) | color;
+			myPlayfield.handleRegisterUpdate(addr, value);
+			myBall.handleRegisterUpdate(addr, value);
+			myColor[PFColor] = myPlayfield.getColor();
+			myColor[BLColor] = myBall.getColor();
       break;
     }
 
     case COLUBK:  // Color-Luminance Background
     {
-      uInt32 color = (uInt32)(value & 0xfe);
-      if(myColorLossEnabled && (myScanlineCountForLastFrame & 0x01))
-      {
-        color |= 0x01;
-      }
-      myColor[BKColor] = (((((color << 8) | color) << 8) | color) << 8) | color;
+			myBackground.handleRegisterUpdate(addr, value);
+			myColor[BKColor] = myBackground.getColor();
       break;
     }
 
@@ -1310,12 +1290,6 @@ bool TIA::poke(uInt16 addr, uInt8 value)
     case PF2:     // Playfield register byte 2
     {
       myPlayfield.handleRegisterUpdate(addr, value);
-
-    #ifdef DEBUGGER_SUPPORT
-      uInt16 dataAddr = mySystem->m6502().lastDataAddressForPoke();
-      if(dataAddr)
-        mySystem->setAccessFlags(dataAddr, CartDebug::PGFX);
-    #endif
       break;
     }
 
@@ -1336,12 +1310,12 @@ bool TIA::poke(uInt16 addr, uInt8 value)
         newx = hpos < -2 ? 3 : ((hpos + 5) % SCANLINE_PIXEL);
         applyPreviousHMOVEMotion(hpos, newx, myPlayer0.myHM);
       }
-      if(myPlayer0.myPos != newx)
+      if(myPlayer0.getPos() != newx)
       {
         // TODO - update player timing
 
         // Find out under what condition the player is being reset
-        delay = TIATables::PxPosResetWhen[myPlayer0.myNUSIZ & 7][myPlayer0.getPos()][newx];
+        delay = TIATables::PxPosResetWhen[myPlayer0.getNUSIZ() & 7][myPlayer0.getPos()][newx];
 
         switch(delay)
         {
@@ -1364,7 +1338,7 @@ bool TIA::poke(uInt16 addr, uInt8 value)
             myPlayer0.mySuppress = 0;
             break;
         }
-        myPlayer0.myPos = newx;
+        myPlayer0.setPos(newx);
       }
       break;
     }
@@ -1391,7 +1365,7 @@ bool TIA::poke(uInt16 addr, uInt8 value)
         // TODO - update player timing
 
         // Find out under what condition the player is being reset
-        delay = TIATables::PxPosResetWhen[myPlayer1.myNUSIZ & 7][myPlayer1.getPos()][newx];
+        delay = TIATables::PxPosResetWhen[myPlayer1.getNUSIZ() & 7][myPlayer1.getPos()][newx];
 
         switch(delay)
         {
@@ -1414,7 +1388,7 @@ bool TIA::poke(uInt16 addr, uInt8 value)
             myPlayer1.mySuppress = 0;
             break;
         }
-        myPlayer1.myPos = newx;
+        myPlayer1.setPos(newx);
       }
       break;
     }
@@ -1454,7 +1428,7 @@ bool TIA::poke(uInt16 addr, uInt8 value)
     {
       myPlayer1.handleRegisterUpdate(addr, value);
  	    myPlayer0.handleRegisterUpdate(addr, value);  // handles VDELP0
-      myBall.handleRegisterUpdate(addr, value); // handles VDELBL
+      myBall.handleRegisterUpdate(addr, value);			// handles VDELBL
 
     #ifdef DEBUGGER_SUPPORT
       uInt16 dataAddr = mySystem->m6502().lastDataAddressForPoke();
@@ -1689,7 +1663,8 @@ TIA::TIA(const TIA& c)
 		myMissile0(c),
 		myMissile1(c),
 		myBall(c),
-		myPlayfield(c)
+		myPlayfield(c),
+		myBackground(c)
 {
   assert(false);
 }
@@ -1707,7 +1682,7 @@ TIA& TIA::operator = (const TIA&)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-TIA::AbstractTIAObject::AbstractTIAObject(const TIA& tia)	: myTia(tia)
+TIA::AbstractTIAObject::AbstractTIAObject(const TIA& tia)	: myTIA(tia)
 {	
 	reset();
 }
@@ -1715,19 +1690,16 @@ TIA::AbstractTIAObject::AbstractTIAObject(const TIA& tia)	: myTia(tia)
 void TIA::AbstractTIAObject::reset()
 {
 	myColor = 0;
-	isEnabled = false;
 }
 
 void TIA::AbstractTIAObject::save(Serializer& out) const
 {
 	out.putInt(myColor);
-	out.putBool(isEnabled);
 }
 
 void TIA::AbstractTIAObject::load(Serializer& in)
 {
 	myColor = in.getInt();
-	isEnabled = in.getBool();
 }
 
 // Triggers an update of the object until the current clock, returns true if the current pixel is enabled (TODO: color, priorities).
@@ -1744,22 +1716,87 @@ void TIA::AbstractTIAObject::handleRegisterUpdate(uInt8 addr, uInt8 value)
 void TIA::AbstractTIAObject::handleCOLU(uInt8 value)
 {
   uInt32 color = (uInt32)(value & 0xfe);
-  if(myTia.myColorLossEnabled && (myTia.myScanlineCountForLastFrame & 0x01))
+  if(myTIA.myColorLossEnabled && (myTIA.myScanlineCountForLastFrame & 0x01))
   {
     color |= 0x01;
   }
   myColor = (((((color << 8) | color) << 8) | color) << 8) | color;
 }
 
-void TIA::AbstractTIAObject::handleEnabled(uInt32 value)
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+TIA::Background::Background(const TIA& tia)	: AbstractTIAObject(tia)
+{	
+	reset();
+}
+
+// Triggers an update of the object until the current clock, returns true if the current pixel is enabled (TODO: color, priorities).
+uInt8 TIA::Background::getState()
+{
+	return 0;
+}
+
+// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
+void TIA::Background::handleRegisterUpdate(uInt8 addr, uInt8 value)
+{
+	AbstractTIAObject::handleRegisterUpdate(addr, value);
+
+	switch(addr)
+	{
+		case COLUBK:	// Color-Luminance Background
+			handleCOLU(value);
+			break;
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+TIA::AbstractGraphicObject::AbstractGraphicObject(const TIA& tia)	: AbstractTIAObject(tia)
+{	
+	reset();
+}
+
+void TIA::AbstractGraphicObject::reset()
+{
+	AbstractTIAObject::reset();
+
+	isEnabled = false;
+}
+
+void TIA::AbstractGraphicObject::save(Serializer& out) const
+{
+	AbstractTIAObject::save(out);
+
+	out.putBool(isEnabled);
+}
+
+void TIA::AbstractGraphicObject::load(Serializer& in)
+{
+	AbstractTIAObject::load(in);
+
+	isEnabled = in.getBool();
+}
+
+// Triggers an update of the object until the current clock, returns true if the current pixel is enabled (TODO: color, priorities).
+uInt8 TIA::AbstractGraphicObject::getState()
+{
+	return 0;
+}
+
+// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
+void TIA::AbstractGraphicObject::handleRegisterUpdate(uInt8 addr, uInt8 value)
+{
+	AbstractTIAObject::handleRegisterUpdate(addr, value);
+}
+
+void TIA::AbstractGraphicObject::handleEnabled(uInt32 value)
 {
 	isEnabled = (value != 0);
 }
 
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-TIA::Playfield::Playfield(const TIA& tia) : AbstractTIAObject(tia)
+TIA::Playfield::Playfield(const TIA& tia) : AbstractGraphicObject(tia)
 {
   reset();
 }
@@ -1773,7 +1810,7 @@ void TIA::Playfield::reset()
 
 void TIA::Playfield::save(Serializer& out) const
 {
-	AbstractTIAObject::save(out);
+	AbstractGraphicObject::save(out);
 
 	out.putByte(myCTRLPF);
 	out.putInt(myPF);
@@ -1782,7 +1819,7 @@ void TIA::Playfield::save(Serializer& out) const
 
 void TIA::Playfield::load(Serializer& in)
 {
-	AbstractTIAObject::load(in);
+	AbstractGraphicObject::load(in);
 
   myCTRLPF = in.getByte();
 	myPF = in.getInt();
@@ -1791,70 +1828,74 @@ void TIA::Playfield::load(Serializer& in)
 
 void TIA::Playfield::handleRegisterUpdate(uInt8 addr, uInt8 value)
 {
-  AbstractTIAObject::handleRegisterUpdate(addr, value);
+  AbstractGraphicObject::handleRegisterUpdate(addr, value);
 
 	switch(addr)
 	{
-		case COLUPF:
+		case COLUPF:	// Color-Luminance Background
 			handleCOLU(value);
 			break;
     case CTRLPF:  // Control Playfield, Ball size, Collisions
 			handleCTRLPF(value);
 			break;
     case PF0:     // Playfield register byte 0
-      myPF = (myPF & 0x000FFFF0) | ((value >> 4) & 0x0F);
-			handleEnabled(myPF);
+			handlePF(value >> 4, 0x000FFFF0); 
       break;
     case PF1:     // Playfield register byte 1
-      myPF = (myPF & 0x000FF00F) | ((uInt32)value << 4);
-			handleEnabled(myPF);
+			handlePF((uInt32)value << 4, 0x000FF00F); 
       break;
     case PF2:     // Playfield register byte 2
-      myPF = (myPF & 0x00000FFF) | ((uInt32)value << 12);
-			handleEnabled(myPF);
-    break;
+			handlePF((uInt32)value << 12, 0x00000FFF); 
+			break;
 	}
 }
 
 void TIA::Playfield::handleCTRLPF(uInt8 value)
 {
-  myCTRLPF = value;
+  myCTRLPF = value & 0x07;
 
   // The playfield priority and score bits from the control register
   // are accessed when the frame is being drawn.  We precompute the 
   // necessary value here so we can save time while drawing.
   myPriorityAndScore = ((myCTRLPF & 0x06) << 5);
 
-  // Update the playfield mask based on reflection state if 
-  // we're still on the left hand side of the playfield
-	//Int32 clock = myTia.mySystem->cycles() * PIXEL_CLOCKS;
-  //if(((clock - myTia.myClockWhenFrameStarted) % SCANLINE_CLOCKS) < (HBLANK_CLOCKS + SCANLINE_PIXEL/2 - 1))
-  //  myMask = TIATables::PFMask[myCTRLPF & 0x01];
+	// Update the playfield mask based on reflection state 
+			// if we're still on the left hand side of the playfield
+			//Int32 clock = myTIA.mySystem->cycles() * PIXEL_CLOCKS;
+			//if(((clock - myTIA.myClockWhenFrameStarted) % SCANLINE_CLOCKS) < (HBLANK_CLOCKS + SCANLINE_PIXEL/2 - 1))
+			//  myMask = TIATables::PFMask[myCTRLPF & 0x01];
   myMask = TIATables::PFMask[myCTRLPF & 0x01];
 }
 
-/*void TIA::Playfield::newScanline()
+void TIA::Playfield::handlePF(uInt32 value, uInt32 mask)
 {
-	//myMask = TIATables::PFMask[myCTRLPF & 0x01];
-}*/
+	myPF = (myPF & mask) | value;
+	handleEnabled(myPF);
+
+  #ifdef DEBUGGER_SUPPORT
+    uInt16 dataAddr = myTIA.mySystem->m6502().lastDataAddressForPoke();
+    if(dataAddr)
+      myTIA.mySystem->setAccessFlags(dataAddr, CartDebug::PGFX);
+  #endif
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-TIA::AbstractMoveableTIAObject::AbstractMoveableTIAObject(const TIA& tia) : AbstractTIAObject(tia)
+TIA::AbstractMoveableGraphicObject::AbstractMoveableGraphicObject(const TIA& tia) : AbstractGraphicObject(tia)
 {
   reset();
 }
 
-void TIA::AbstractMoveableTIAObject::reset()
+void TIA::AbstractMoveableGraphicObject::reset()
 {
 	myPos = myMotionClock = myHM = myVDEL = 0;
 	myCurrentHMOVEPos = myPreviousHMOVEPos = IGNORE_HMOVE_POS;
 	myHMmmr = false;
 }
 
-void TIA::AbstractMoveableTIAObject::save(Serializer& out) const
+void TIA::AbstractMoveableGraphicObject::save(Serializer& out) const
 {
-	AbstractTIAObject::save(out);
+	AbstractGraphicObject::save(out);
 
 	out.putByte(myHM);
 	out.putBool(myVDEL);
@@ -1866,9 +1907,9 @@ void TIA::AbstractMoveableTIAObject::save(Serializer& out) const
 	out.putBool(myHMmmr);
 }
 
-void TIA::AbstractMoveableTIAObject::load(Serializer& in)
+void TIA::AbstractMoveableGraphicObject::load(Serializer& in)
 {
-	AbstractTIAObject::load(in);
+	AbstractGraphicObject::load(in);
 
 	myHM = in.getByte();
 	myVDEL = in.getBool();
@@ -1880,27 +1921,27 @@ void TIA::AbstractMoveableTIAObject::load(Serializer& in)
 	myHMmmr = in.getBool();
 }
 
-uInt8 TIA::AbstractMoveableTIAObject::getState()
+uInt8 TIA::AbstractMoveableGraphicObject::getState()
 {
-	return AbstractTIAObject::getState();
+	return AbstractGraphicObject::getState();
 }
 
-void TIA::AbstractMoveableTIAObject::handleRegisterUpdate(uInt8 addr, uInt8 value)
+void TIA::AbstractMoveableGraphicObject::handleRegisterUpdate(uInt8 addr, uInt8 value)
 {
-	AbstractTIAObject::handleRegisterUpdate(addr, value);
+	AbstractGraphicObject::handleRegisterUpdate(addr, value);
 
 	switch(addr)
 	{
-	case HMCLR:
-		handleHM(value);
-		break;
-  case HMOVE:
-    handleHMOVE();
-    break;
+		case HMCLR:
+			handleHM(value);
+			break;
+		case HMOVE:
+			handleHMOVE();
+			break;
 	}
 }
 
-void TIA::AbstractMoveableTIAObject::handleVDEL(uInt8 value)
+void TIA::AbstractMoveableGraphicObject::handleVDEL(uInt8 value)
 {
 	myVDEL = value & 0x01;
 }
@@ -1931,14 +1972,14 @@ void TIA::AbstractMoveableTIAObject::handleVDEL(uInt8 value)
 // Most of the ideas in these methods come from MESS.
 // (used with permission from Wilbert Pol)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TIA::AbstractMoveableTIAObject::handleHM(uInt8 value)
+void TIA::AbstractMoveableGraphicObject::handleHM(uInt8 value)
 {
 	value &= 0xF0;
   if(myHM == value)
     return;
 
-  Int32 clock = myTia.mySystem->cycles() * PIXEL_CLOCKS;
-  int hpos  = (clock - myTia.myClockWhenFrameStarted) % SCANLINE_CLOCKS - HBLANK_CLOCKS;
+  Int32 clock = myTIA.mySystem->cycles() * PIXEL_CLOCKS;
+  int hpos  = (clock - myTIA.myClockWhenFrameStarted) % SCANLINE_CLOCKS - HBLANK_CLOCKS;
 
   // Check if HMOVE is currently active
   if(myCurrentHMOVEPos != IGNORE_HMOVE_POS &&
@@ -1965,10 +2006,11 @@ void TIA::AbstractMoveableTIAObject::handleHM(uInt8 value)
   myHM = value;
 }
 
-void TIA::AbstractMoveableTIAObject::handleHMOVE()
+// Write the specified value to the HMOVE registers at the given clock
+void TIA::AbstractMoveableGraphicObject::handleHMOVE()
 {
-  Int32 clock = myTia.mySystem->cycles() * PIXEL_CLOCKS;
-  int hpos = (clock - myTia.myClockWhenFrameStarted) % SCANLINE_CLOCKS - HBLANK_CLOCKS;
+  Int32 clock = myTIA.mySystem->cycles() * PIXEL_CLOCKS;
+  int hpos = (clock - myTIA.myClockWhenFrameStarted) % SCANLINE_CLOCKS - HBLANK_CLOCKS;
 	myCurrentHMOVEPos = hpos;
 
   // Do we have to undo some of the already applied cycles from an
@@ -2037,7 +2079,7 @@ void TIA::AbstractMoveableTIAObject::handleHMOVE()
 // Most of the ideas in these methods come from MESS.
 // (used with permission from Wilbert Pol)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline void TIA::AbstractMoveableTIAObject::applyActiveHMOVEMotion(int hpos, Int16& pos)
+inline void TIA::AbstractMoveableGraphicObject::applyActiveHMOVEMotion(int hpos, Int16& pos)
 {
   if(hpos < BSPF_min(myCurrentHMOVEPos + 6 + 16 * 4, 7))
   {
@@ -2052,7 +2094,7 @@ inline void TIA::AbstractMoveableTIAObject::applyActiveHMOVEMotion(int hpos, Int
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline void TIA::AbstractMoveableTIAObject::applyPreviousHMOVEMotion(int hpos, Int16& pos)
+inline void TIA::AbstractMoveableGraphicObject::applyPreviousHMOVEMotion(int hpos, Int16& pos)
 {
   if(myPreviousHMOVEPos != IGNORE_HMOVE_POS)
   {
@@ -2065,10 +2107,10 @@ inline void TIA::AbstractMoveableTIAObject::applyPreviousHMOVEMotion(int hpos, I
   }
 }
 
-void TIA::AbstractMoveableTIAObject::handleRES()
+void TIA::AbstractMoveableGraphicObject::handleRES()
 {
-  Int32 clock = myTia.mySystem->cycles() * PIXEL_CLOCKS;
-  Int32 hpos = (clock - myTia.myClockWhenFrameStarted) % SCANLINE_CLOCKS - HBLANK_CLOCKS;
+  Int32 clock = myTIA.mySystem->cycles() * PIXEL_CLOCKS;
+  Int32 hpos = (clock - myTIA.myClockWhenFrameStarted) % SCANLINE_CLOCKS - HBLANK_CLOCKS;
   Int16 newx;
 
   // Check if HMOVE is currently active
@@ -2089,12 +2131,12 @@ void TIA::AbstractMoveableTIAObject::handleRES()
   }
 }
 
-void TIA::AbstractMoveableTIAObject::handleRESChange(Int32 newx)
+void TIA::AbstractMoveableGraphicObject::handleRESChange(Int32 newx)
 {
   myPos = newx;
 }
 
-inline void TIA::AbstractMoveableTIAObject::handlePendingMotions()
+inline void TIA::AbstractMoveableGraphicObject::handlePendingMotions()
 {
   // We're no longer concerned with previously issued HMOVE's
   myPreviousHMOVEPos = IGNORE_HMOVE_POS;
@@ -2118,14 +2160,14 @@ inline void TIA::AbstractMoveableTIAObject::handlePendingMotions()
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-TIA::AbstractPlayer::AbstractPlayer(const TIA& tia) : AbstractMoveableTIAObject(tia)
+TIA::AbstractPlayer::AbstractPlayer(const TIA& tia) : AbstractMoveableGraphicObject(tia)
 {
   reset();
 }
 
 void TIA::AbstractPlayer::reset()
 {
-  AbstractMoveableTIAObject::reset();
+  AbstractMoveableGraphicObject::reset();
 
 	myGRP = myDGRP = myNUSIZ = 0;
 	myREFP = false;
@@ -2137,7 +2179,7 @@ void TIA::AbstractPlayer::reset()
 
 void TIA::AbstractPlayer::save(Serializer& out) const
 {
-	AbstractMoveableTIAObject::save(out);
+	AbstractMoveableGraphicObject::save(out);
 
   out.putByte(myGRP);
   out.putByte(myDGRP);
@@ -2150,7 +2192,7 @@ void TIA::AbstractPlayer::save(Serializer& out) const
 
 void TIA::AbstractPlayer::load(Serializer& in)
 {
-	AbstractMoveableTIAObject::load(in);
+	AbstractMoveableGraphicObject::load(in);
   
   myGRP = in.getByte();
   myDGRP = in.getByte();
@@ -2163,12 +2205,12 @@ void TIA::AbstractPlayer::load(Serializer& in)
 
 uInt8 TIA::AbstractPlayer::getState()
 {
-	return AbstractMoveableTIAObject::getState();
+	return AbstractMoveableGraphicObject::getState();
 }
 
 void TIA::AbstractPlayer::handleRegisterUpdate(uInt8 addr, uInt8 value)
 {
-	AbstractMoveableTIAObject::handleRegisterUpdate(addr, value);
+	AbstractMoveableGraphicObject::handleRegisterUpdate(addr, value);
 
 	switch(addr)
 	{
@@ -2201,7 +2243,7 @@ void TIA::AbstractPlayer::handleDelayedGRP(uInt8 value)
 
 void TIA::AbstractPlayer::handleHMOVE()
 {
-  TIA::AbstractMoveableTIAObject::handleHMOVE();
+  TIA::AbstractMoveableGraphicObject::handleHMOVE();
   // TODO - handle late HMOVE's
   mySuppress = 0;
 }
@@ -2220,18 +2262,18 @@ void TIA::AbstractPlayer::handleREFP(uInt8 value)
 
 void TIA::AbstractPlayer::handleVDEL(uInt8 value)
 {
-	TIA::AbstractMoveableTIAObject::handleVDEL(value);
+	TIA::AbstractMoveableGraphicObject::handleVDEL(value);
 
 	handleCurrentGRP();
 	handleEnabled(myCurrentGRP);
 }
 
-inline Int32 TIA::AbstractPlayer::getActiveHPos(Int32 hpos)
+inline Int32 TIA::AbstractPlayer::getActiveHPos(Int32 hpos) const
 {
   return hpos < 7 ? 3 : ((hpos + 5) % SCANLINE_PIXEL);
 }
 
-inline Int32 TIA::AbstractPlayer::getPreviousHPos(Int32 hpos)
+inline Int32 TIA::AbstractPlayer::getPreviousHPos(Int32 hpos) const
 {
   return hpos < -2 ? 3 : ((hpos + 5) % SCANLINE_PIXEL);
 }
@@ -2265,7 +2307,7 @@ void TIA::AbstractPlayer::handleRESChange(Int32 newx)
       break;
   }
 
-  TIA::AbstractMoveableTIAObject::handleRESChange(newx);
+  TIA::AbstractMoveableGraphicObject::handleRESChange(newx);
 }
 
 inline void TIA::AbstractPlayer::updateMask()
@@ -2285,32 +2327,31 @@ void TIA::Player0::handleRegisterUpdate(uInt8 addr, uInt8 value)
 	AbstractPlayer::handleRegisterUpdate(addr, value);
 	switch(addr)
 	{
-		case COLUP0:
+		case COLUP0:	// Color-Luminance Player 1
 			handleCOLU(value);
 			break;
-		case HMP0:
+		case HMP0:		// Horizontal Motion Player 0
 			handleHM(value);
 			break;
-		case GRP0:
+		case GRP0:		// Graphics Player 0
 			handleGRP(value);
 			break;
-		case GRP1:
+		case GRP1:		// Graphics Player 1
 			handleDelayedGRP(value);
 			break;
-		case NUSIZ0:
+		case NUSIZ0:	// Number-size of player-missle 0
 			handleNUSIZ(value);
       mySuppress = 0;
 			break;
-		case REFP0:
+		case REFP0:		// Reflect Player 0
 			handleREFP(value);
 			break;
-    /*case RESP0:
+    /*case RESP0:	  // Reset Player 0
       handleRES();
       break;*/
-		case VDELP0:
+		case VDELP0:	// Vertical Delay Player 0
 			handleVDEL(value);
 			break;
-
 	}
 }
 
@@ -2328,26 +2369,26 @@ void TIA::Player1::handleRegisterUpdate(uInt8 addr, uInt8 value)
 		case COLUP1:
 			handleCOLU(value);
 			break;
-		case HMP1:
+		case HMP1:		// Horizontal Motion Player 0
 			handleHM(value);
 			break;
-		case GRP1:
+		case GRP1:		// Graphics Player 1
 			handleGRP(value);
 			break;
-		case GRP0:
+		case GRP0:		// Graphics Player 0
 			handleDelayedGRP(value);
 			break;
-		case NUSIZ1:
+		case NUSIZ1:	// Number-size of player-missle 1
 			handleNUSIZ(value);
       mySuppress = 0;
 			break;
-		case REFP1:
+		case REFP1:		// Reflect Player 1
 			handleREFP(value);
 			break;
-    /*case RESP1:
+    /*case RESP1:	  // Reset Player 1
       handleRES();
       break;*/
-		case VDELP1:
+		case VDELP1:	// Vertical Delay Player 1
 			handleVDEL(value);
 			break;
 	}
@@ -2355,35 +2396,35 @@ void TIA::Player1::handleRegisterUpdate(uInt8 addr, uInt8 value)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-TIA::AbstractParticle::AbstractParticle(const TIA& tia) : AbstractMoveableTIAObject(tia)
+TIA::AbstractParticle::AbstractParticle(const TIA& tia) : AbstractMoveableGraphicObject(tia)
 {
   reset();
 }
 
 void TIA::AbstractParticle::reset()
 {
-  AbstractMoveableTIAObject::reset();
+  AbstractMoveableGraphicObject::reset();
 
   myENABLE = false;
 }
 
 void TIA::AbstractParticle::save(Serializer& out) const
 {
-  AbstractMoveableTIAObject::save(out);
+  AbstractMoveableGraphicObject::save(out);
 
   out.putBool(myENABLE);
 }
 
 void TIA::AbstractParticle::load(Serializer& in)
 {
-  AbstractMoveableTIAObject::load(in);
+  AbstractMoveableGraphicObject::load(in);
   
   myENABLE = in.getBool();
 }
 
 void TIA::AbstractParticle::handleRegisterUpdate(uInt8 addr, uInt8 value)
 {
-	AbstractMoveableTIAObject::handleRegisterUpdate(addr, value);
+	AbstractMoveableGraphicObject::handleRegisterUpdate(addr, value);
 
 	switch(addr)
 	{
@@ -2430,7 +2471,7 @@ void TIA::AbstractMissile::load(Serializer& in)
 
 uInt8 TIA::AbstractMissile::getState()
 {
-	return AbstractMoveableTIAObject::getState();
+	return AbstractMoveableGraphicObject::getState();
 }
 
 void TIA::AbstractMissile::handleRegisterUpdate(uInt8 addr, uInt8 value)
@@ -2444,7 +2485,7 @@ void TIA::AbstractMissile::handleRegisterUpdate(uInt8 addr, uInt8 value)
 
 void TIA::AbstractMissile::handleEnabled()
 {
-	TIA::AbstractTIAObject::handleEnabled(myENABLE && !myRESMP);
+	TIA::AbstractGraphicObject::handleEnabled(myENABLE && !myRESMP);
 }
 
 void TIA::AbstractMissile::handleNUSIZ(uInt8 value)
@@ -2475,12 +2516,12 @@ void TIA::AbstractMissile::handleRESMP(uInt8 value)
   myRESMP = value & 0x02;
 }
 
-inline Int32 TIA::AbstractMissile::getActiveHPos(Int32 hpos)
+inline Int32 TIA::AbstractMissile::getActiveHPos(Int32 hpos) const
 {
   return hpos < 7 ? 2 : ((hpos + 4) % SCANLINE_PIXEL);
 }
 
-inline Int32 TIA::AbstractMissile::getPreviousHPos(Int32 hpos)
+inline Int32 TIA::AbstractMissile::getPreviousHPos(Int32 hpos) const
 {
   return hpos < -1 ? 2 : ((hpos + 4) % SCANLINE_PIXEL);
 }
@@ -2534,25 +2575,25 @@ void TIA::Missile0::handleRegisterUpdate(uInt8 addr, uInt8 value)
 
 	switch(addr)
 	{
-	case COLUP0:
-		handleCOLU(value);
-		break;
-  case ENAM0:
-		handleENABLE(value);
-		handleEnabled();
-    break;
-  case HMM0:
-		handleHM(value);
-		break;
-	case NUSIZ0:
-		handleNUSIZ(value);
-		break;
-  case RESM0:
-    handleRES();
-    break;
-  case RESMP0:
-    handleRESMP(value);
-    break;
+		case COLUP0:	// Color-Luminance Player 0
+			handleCOLU(value);
+			break;
+		case ENAM0:		// Enable Missile 0 graphics
+			handleENABLE(value);
+			handleEnabled();
+			break;
+		case HMM0:		// Horizontal Motion Missile 0
+			handleHM(value);
+			break;
+		case NUSIZ0:	// Number-size of player-missile 0
+			handleNUSIZ(value);
+			break;
+		case RESM0:		// Reset Missile 0	
+			handleRES();
+			break;
+		case RESMP0:	// Reset missile 0 to player 0
+			handleRESMP(value);
+			break;
 	}
 }
 
@@ -2569,25 +2610,25 @@ void TIA::Missile1::handleRegisterUpdate(uInt8 addr, uInt8 value)
 
 	switch(addr)
 	{
-	case COLUP1:
-		handleCOLU(value);
-		break;
-  case ENAM1:
-		handleENABLE(value);
-		handleEnabled();
-    break;
-  case HMM1:
-		handleHM(value);
-		break;
-	case NUSIZ1:
-		handleNUSIZ(value);
-		break;
-  case RESM1:
-    handleRES();
-    break;
-  case RESMP1:
-    handleRESMP(value);
-    break;
+		case COLUP1:	// Color-Luminance Player 1
+			handleCOLU(value);
+			break;
+		case ENAM1:		// Enable Missile 1 graphics
+			handleENABLE(value);
+			handleEnabled();
+			break;
+		case HMM1:		// Horizontal Motion Missile 1
+			handleHM(value);
+			break;
+		case NUSIZ1:	// Number-size of player-missile 1
+			handleNUSIZ(value);
+			break;
+		case RESM1:		// Reset Missile 1	
+			handleRES();
+			break;
+		case RESMP1:	// Reset missile 1 to player 1
+			handleRESMP(value);
+			break;
 	}
 }
 
@@ -2628,7 +2669,7 @@ void TIA::Ball::load(Serializer& in)
 
 uInt8 TIA::Ball::getState()
 {
-	return AbstractMoveableTIAObject::getState();
+	return AbstractMoveableGraphicObject::getState();
 }
 
 void TIA::Ball::handleRegisterUpdate(uInt8 addr, uInt8 value)
@@ -2637,6 +2678,9 @@ void TIA::Ball::handleRegisterUpdate(uInt8 addr, uInt8 value)
 
 	switch(addr)
 	{
+		case COLUPF:
+			handleCOLU(value);
+			break;
 		case CTRLPF:
 			handleCTRLPF(value);
 			break;
@@ -2668,7 +2712,7 @@ void TIA::Ball::handleCurrentEnabled()
 
 void TIA::Ball::handleCTRLPF(uInt8 value)
 {
-  myCTRLPF = value;
+  myCTRLPF = value & 0x30;
 }
 
 void TIA::Ball::handleGRP1(uInt8 value)
@@ -2680,12 +2724,12 @@ void TIA::Ball::handleGRP1(uInt8 value)
   uInt8 newx = 0;  
 }
 
-inline Int32 TIA::Ball::getActiveHPos(Int32 hpos)
+inline Int32 TIA::Ball::getActiveHPos(Int32 hpos) const
 {
   return hpos < 7 ? 2 : ((hpos + 4) % SCANLINE_PIXEL);
 }
 
-inline Int32 TIA::Ball::getPreviousHPos(Int32 hpos)
+inline Int32 TIA::Ball::getPreviousHPos(Int32 hpos) const
 {
   return hpos < 0 ? 2 : ((hpos + 4) % SCANLINE_PIXEL);
 }
@@ -2693,5 +2737,5 @@ inline Int32 TIA::Ball::getPreviousHPos(Int32 hpos)
 inline void TIA::Ball::updateMask()
 {
   myMask = &TIATables::BLMask[myPos & 0x03]
-      [(myCTRLPF & 0x30) >> 4][SCANLINE_PIXEL - (myPos & 0xFC)];
+      [myCTRLPF >> 4][SCANLINE_PIXEL - (myPos & 0xFC)];
 }

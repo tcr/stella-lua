@@ -217,7 +217,7 @@ bool TIADebug::enaM0(int newVal)
   if(newVal > -1)
     mySystem.poke(ENAM0, ((bool)newVal) << 1);
 
-  return myTIA.myMissile0.myENABLE;
+  return myTIA.myMissile0.isENABLE();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -226,7 +226,7 @@ bool TIADebug::enaM1(int newVal)
   if(newVal > -1)
     mySystem.poke(ENAM1, ((bool)newVal) << 1);
 
-  return myTIA.myMissile1.myENABLE;
+  return myTIA.myMissile1.isENABLE();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -244,7 +244,7 @@ bool TIADebug::resMP0(int newVal)
   if(newVal > -1)
     mySystem.poke(RESMP0, ((bool)newVal) << 1);
 
-  return myTIA.myMissile0.myRESMP;
+  return myTIA.myMissile0.isRESMP();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -253,7 +253,7 @@ bool TIADebug::resMP1(int newVal)
   if(newVal > -1)
     mySystem.poke(RESMP1, ((bool)newVal) << 1);
 
-  return myTIA.myMissile1.myRESMP;
+  return myTIA.myMissile1.isRESMP();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -287,7 +287,7 @@ bool TIADebug::refPF(int newVal)
     mySystem.poke(CTRLPF, tmp);
   }
 
-  return myTIA.myPlayfield.myCTRLPF & 0x01;
+  return myTIA.myPlayfield.getCTRLPF() & 0x01;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -303,7 +303,7 @@ bool TIADebug::scorePF(int newVal)
     mySystem.poke(CTRLPF, tmp);
   }
 
-  return myTIA.myPlayfield.myCTRLPF & 0x02;
+  return myTIA.myPlayfield.getCTRLPF() & 0x02;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -319,7 +319,7 @@ bool TIADebug::priorityPF(int newVal)
     mySystem.poke(CTRLPF, tmp);
   }
 
-  return myTIA.myPlayfield.myCTRLPF & 0x04;
+  return myTIA.myPlayfield.getCTRLPF() & 0x04;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -461,7 +461,7 @@ uInt8 TIADebug::nusiz0(int newVal)
   if(newVal > -1)
     mySystem.poke(NUSIZ0, newVal);
 
-  return myTIA.myPlayer0.myNUSIZ;
+	return myTIA.myPlayer0.getNUSIZ();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -470,7 +470,7 @@ uInt8 TIADebug::nusiz1(int newVal)
   if(newVal > -1)
     mySystem.poke(NUSIZ1, newVal);
 
-  return myTIA.myPlayer1.myNUSIZ;
+  return myTIA.myPlayer1.getNUSIZ();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -478,12 +478,12 @@ uInt8 TIADebug::nusizP0(int newVal)
 {
   if(newVal > -1)
   {
-    uInt8 tmp = myTIA.myPlayer0.myNUSIZ & ~0x07;
+    uInt8 tmp = myTIA.myPlayer0.getNUSIZ() & ~0x07;
     tmp |= (newVal & 0x07);
     mySystem.poke(NUSIZ0, tmp);
   }
 
-  return myTIA.myPlayer0.myNUSIZ & 0x07;
+  return myTIA.myPlayer0.getNUSIZ() & 0x07;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -491,12 +491,12 @@ uInt8 TIADebug::nusizP1(int newVal)
 {
   if(newVal > -1)
   {
-    uInt8 tmp = myTIA.myPlayer1.myNUSIZ & ~0x07;
+    uInt8 tmp = myTIA.myPlayer1.getNUSIZ() & ~0x07;
     tmp |= newVal & 0x07;
     mySystem.poke(NUSIZ1, tmp);
   }
 
-  return myTIA.myPlayer1.myNUSIZ & 0x07;
+  return myTIA.myPlayer1.getNUSIZ() & 0x07;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -504,12 +504,12 @@ uInt8 TIADebug::nusizM0(int newVal)
 {
   if(newVal > -1)
   {
-    uInt8 tmp = myTIA.myMissile0.myNUSIZ & ~0x30;
+    uInt8 tmp = myTIA.myMissile0.getNUSIZ() & ~0x30;
     tmp |= (newVal & 0x04) << 4;
     mySystem.poke(NUSIZ0, tmp);
   }
 
-  return (myTIA.myMissile0.myNUSIZ & 0x30) >> 4;
+  return (myTIA.myMissile0.getNUSIZ() & 0x30) >> 4;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -517,12 +517,12 @@ uInt8 TIADebug::nusizM1(int newVal)
 {
   if(newVal > -1)
   {
-    uInt8 tmp = myTIA.myMissile1.myNUSIZ & ~0x30;
+    uInt8 tmp = myTIA.myMissile1.getNUSIZ() & ~0x30;
     tmp |= (newVal & 0x04) << 4;
     mySystem.poke(NUSIZ1, tmp);
   }
 
-  return (myTIA.myMissile1.myNUSIZ & 0x30) >> 4;
+	return (myTIA.myMissile1.getNUSIZ() & 0x30) >> 4;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -547,7 +547,7 @@ uInt8 TIADebug::grP1(int newVal)
 uInt8 TIADebug::posP0(int newVal)
 {
   if(newVal > -1)
-	  myTIA.myPlayer0.myPos = newVal;
+	  myTIA.myPlayer0.setPos(newVal);
 
   return myTIA.myPlayer0.getPos();
 }
@@ -556,7 +556,7 @@ uInt8 TIADebug::posP0(int newVal)
 uInt8 TIADebug::posP1(int newVal)
 {
   if(newVal > -1)
-    myTIA.myPlayer1.myPos = newVal;
+    myTIA.myPlayer1.setPos(newVal);
 
   return myTIA.myPlayer1.getPos();
 }
@@ -565,27 +565,27 @@ uInt8 TIADebug::posP1(int newVal)
 uInt8 TIADebug::posM0(int newVal)
 {
   if(newVal > -1)
-		myTIA.myMissile0.myPos = newVal;
+		myTIA.myMissile0.setPos(newVal);
 
-  return myTIA.myMissile0.myPos;
+  return myTIA.myMissile0.getPos();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 uInt8 TIADebug::posM1(int newVal)
 {
   if(newVal > -1)
-    myTIA.myMissile1.myPos = newVal;
+    myTIA.myMissile1.setPos(newVal);
 
-  return myTIA.myMissile1.myPos;
+  return myTIA.myMissile1.getPos();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 uInt8 TIADebug::posBL(int newVal)
 {
   if(newVal > -1)
-    myTIA.myBall.myPos = newVal;
+    myTIA.myBall.setPos(newVal);
 
-  return myTIA.myBall.myPos;
+  return myTIA.myBall.getPos();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -594,7 +594,7 @@ uInt8 TIADebug::ctrlPF(int newVal)
   if(newVal > -1)
     mySystem.poke(CTRLPF, newVal);
 
-	return myTIA.myPlayfield.getCTRLPF();
+	return myTIA.myPlayfield.getCTRLPF() | myTIA.myBall.getCTRLPF(); 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -602,12 +602,12 @@ uInt8 TIADebug::sizeBL(int newVal)
 {
   if(newVal > -1)
   {
-    uInt8 tmp = myTIA.myPlayfield.getCTRLPF() & ~0x30;
+    uInt8 tmp = myTIA.myBall.getCTRLPF() & ~0x30;
     tmp |= (newVal & 0x04) << 4;
     mySystem.poke(CTRLPF, tmp);
   }
 
-  return (myTIA.myPlayfield.myCTRLPF & 0x30) >> 4;
+  return (myTIA.myBall.getCTRLPF() & 0x30) >> 4;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -788,13 +788,13 @@ string TIADebug::toString()
       << booleanWithLabel("refl", refP1()) << " "
       << booleanWithLabel("delay", vdelP1())
       << endl
-      << "M0: " << (myTIA.myMissile0.myENABLE ? " ENABLED" : "disabled")
+      << "M0: " << (myTIA.myMissile0.isENABLE() ? " ENABLED" : "disabled")
       << " pos=" << myDebugger.valueToString(state.pos[M0])
       << " HM=" << myDebugger.valueToString(state.hm[M0])
       << " size=" << myDebugger.valueToString(state.size[M0]) << " "
       << booleanWithLabel("reset", resMP0())
       << endl
-      << "M1: " << (myTIA.myMissile1.myENABLE ? " ENABLED" : "disabled")
+      << "M1: " << (myTIA.myMissile1.isENABLE() ? " ENABLED" : "disabled")
       << " pos=" << myDebugger.valueToString(state.pos[M1])
       << " HM=" << myDebugger.valueToString(state.hm[M1])
       << " size=" << myDebugger.valueToString(state.size[M1]) << " "
