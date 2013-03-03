@@ -485,8 +485,8 @@ class TIA : public Device
 
     // Indicates if HMOVE blanks are currently or previously enabled,
     // and at which horizontal position the HMOVE was initiated
-    Int32 myCurrentHMOVEPos;
-    Int32 myPreviousHMOVEPos;
+    //Int32 myCurrentHMOVEPos;
+    //Int32 myPreviousHMOVEPos;
     bool myHMOVEBlankEnabled;
     bool myAllowHMOVEBlanks;
 
@@ -535,13 +535,16 @@ class TIA : public Device
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	class Frame
+	{
+	};
 
 	class AbstractTIAObject 
 	{
 	public:
 		AbstractTIAObject(const TIA& tia);
 
-    virtual void reset() = 0;
+    virtual void reset();
 		virtual void save(Serializer& out) const;
 		virtual void load(Serializer& in);
     
@@ -549,6 +552,9 @@ class TIA : public Device
 		virtual uInt8 getState();
 		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
 		virtual void handleRegisterUpdate(uInt8 addr, uInt8 value);
+		virtual string getName() = 0;
+
+		void handleCOLU(uInt8 value);
 
 	protected:
     void handleEnabled(uInt32 value);
@@ -556,6 +562,22 @@ class TIA : public Device
     
 		const TIA& myTia;
 		bool isEnabled;
+		uInt32 myColor;
+	};
+	// TODO: more basic class without enable, used for Background
+
+	class Background : public AbstractTIAObject
+	{
+	public:
+		Background(const TIA& tia);
+
+		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
+		void handleRegisterUpdate(uInt8 addr, uInt8 value);
+		string getName() {return "BK";};
+
+    /*void reset();
+		void save(Serializer& out) const;
+		void load(Serializer& in);*/
 	};
 
 	class Playfield : public AbstractTIAObject
@@ -568,7 +590,8 @@ class TIA : public Device
 		void load(Serializer& in);
 
 		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
-		virtual void handleRegisterUpdate(uInt8 addr, uInt8 value);
+		void handleRegisterUpdate(uInt8 addr, uInt8 value);
+		string getName() {return "PF";};
 
 		// getter:
 		uInt8 getCTRLPF() {return myCTRLPF;}
@@ -659,6 +682,13 @@ class TIA : public Device
 		// mask pointers are always on a uInt32 boundary.  Otherwise,
 		// the TIA code will fail on a good number of CPUs.
 		const uInt8* myMask;
+
+    // Indicates at which horizontal position the HMOVE was initiated
+    Int32 myCurrentHMOVEPos;
+    Int32 myPreviousHMOVEPos;
+
+		// Indicates color clocks when the frame was last updated
+		Int32 myClockAtLastUpdate;
 	};
 
 	// special player logic in here
@@ -724,6 +754,7 @@ class TIA : public Device
 
 		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
 		void handleRegisterUpdate(uInt8 addr, uInt8 value);
+		string getName() {return "P0";};
 
 	protected:
 		inline uInt8 getEnableBit() {return P0Bit;}
@@ -736,6 +767,7 @@ class TIA : public Device
 
 		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
 		void handleRegisterUpdate(uInt8 addr, uInt8 value);
+		string getName() {return "P1";};
 
 	protected:
 		inline uInt8 getEnableBit() {return P1Bit;}
@@ -807,6 +839,7 @@ class TIA : public Device
 		//virtual uInt8 getState();
 		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
 		void handleRegisterUpdate(uInt8 addr, uInt8 value);
+		string getName() {return "M0";};
 
 	protected:
 		inline uInt8 getEnableBit() {return M0Bit;}		
@@ -826,6 +859,7 @@ class TIA : public Device
 		//virtual uInt8 getState();
 		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
 		void handleRegisterUpdate(uInt8 addr, uInt8 value);
+		string getName() {return "M1";};
 
 	protected:
 		inline uInt8 getEnableBit() {return M1Bit;}
@@ -845,6 +879,7 @@ class TIA : public Device
 		virtual uInt8 getState();
 		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
 		void handleRegisterUpdate(uInt8 addr, uInt8 value);
+		string getName() {return "BL";};
 
 		inline void updateMask();
 
