@@ -38,13 +38,6 @@
 
 #include "TIA.hxx"
 
-#define PIXEL_CLOCKS			3
-#define SCANLINE_CYCLES		76
-#define SCANLINE_CLOCKS		(PIXEL_CLOCKS * SCANLINE_CYCLES)
-#define SCANLINE_PIXEL		160
-#define HBLANK_CLOCKS			(SCANLINE_CLOCKS - SCANLINE_PIXEL)
-#define HBLANK_PIXEL			8
-
 #define BUFFER_LINES			320
 #define BUFFER_SIZE				(SCANLINE_PIXEL * BUFFER_LINES)
 
@@ -449,7 +442,7 @@ inline void TIA::startFrame()
   // so that we can adjust the frame's starting clock by this amount.  This
   // is necessary since some games position objects during VSYNC and the
   // TIA's internal counters are not reset by VSYNC.
-  uInt32 clocks = ((mySystem->cycles() * PIXEL_CLOCKS) - myClockWhenFrameStarted) % SCANLINE_CLOCKS;
+  uInt32 clocks = clocksThisLine();
 
   // Ask the system to reset the cycle count so it doesn't overflow
   mySystem->resetCycles();
@@ -1094,15 +1087,15 @@ bool TIA::poke(uInt16 addr, uInt8 value)
 
   addr &= 0x003f;
 
-  Int32 clock = mySystem->cycles() * PIXEL_CLOCKS;
+  const Int32 clock = mySystem->cycles() * PIXEL_CLOCKS;
   Int16 delay = TIATables::PokeDelay[addr];
 
   // See if this is a poke to a PF register
   if(delay == -1)
   {
     static uInt32 d[4] = {4, 5, 2, 3};
-    Int32 x = ((clock - myClockWhenFrameStarted) % SCANLINE_CLOCKS);
-    delay = d[(x / 3) & 3];
+    Int32 hpos = ((clock - myClockWhenFrameStarted) % SCANLINE_CLOCKS);
+    delay = d[(hpos / 3) & 3];
   }
 
   // Update frame to current CPU cycle before we make any changes!
@@ -1295,7 +1288,7 @@ bool TIA::poke(uInt16 addr, uInt8 value)
 
     case RESP0:   // Reset Player 0
     {
-      Int32 hpos = (clock - myClockWhenFrameStarted) % SCANLINE_CLOCKS - HBLANK_CLOCKS;
+      Int32 hpos = posThisLine();
       Int16 newx;
 
       // Check if HMOVE is currently active
@@ -1345,7 +1338,7 @@ bool TIA::poke(uInt16 addr, uInt8 value)
 
     case RESP1:   // Reset Player 1
     {
-      Int32 hpos = (clock - myClockWhenFrameStarted) % SCANLINE_CLOCKS - HBLANK_CLOCKS;
+      Int32 hpos = posThisLine();
       Int16 newx;
 
       // Check if HMOVE is currently active
@@ -1518,7 +1511,7 @@ bool TIA::poke(uInt16 addr, uInt8 value)
 
     case HMOVE:   // Apply horizontal motion
     {
-      int hpos = (clock - myClockWhenFrameStarted) % SCANLINE_CLOCKS - HBLANK_CLOCKS;
+      int hpos = posThisLine();
 
 			// Can HMOVE activities be ignored?
       if(hpos >= -5 && hpos < 97 )
@@ -1778,7 +1771,7 @@ void TIA::AbstractGraphicObject::load(Serializer& in)
 }
 
 // Triggers an update of the object until the current clock, returns true if the current pixel is enabled (TODO: color, priorities).
-uInt8 TIA::AbstractGraphicObject::getState()
+uInt8 TIA::AbstractGraphicObject::getState(Int32 clock) const
 {
 	return 0;
 }
@@ -1825,6 +1818,18 @@ void TIA::Playfield::load(Serializer& in)
 	myPF = in.getInt();
 	myPriorityAndScore = in.getByte();
 }
+
+uInt8 TIA::Playfield::getState(Int32 clock) const
+{
+  uInt32 hpos = myTIA.posThisLine();
+	return AbstractGraphicObject::getState(clock);
+}
+
+uInt8 TIA::Playfield::getEnabled(uInt32 hpos) const 
+{
+	return (isEnabled && (getMaskValue() & myMask[hpos])) ? getEnableBit() & myTIA.myDisabledObjects : 0;
+}
+
 
 void TIA::Playfield::handleRegisterUpdate(uInt8 addr, uInt8 value)
 {
@@ -1921,9 +1926,14 @@ void TIA::AbstractMoveableGraphicObject::load(Serializer& in)
 	myHMmmr = in.getBool();
 }
 
-uInt8 TIA::AbstractMoveableGraphicObject::getState()
+uInt8 TIA::AbstractMoveableGraphicObject::getState(Int32 clock) const
 {
-	return AbstractGraphicObject::getState();
+	return AbstractGraphicObject::getState(clock);
+}
+
+uInt8 TIA::AbstractMoveableGraphicObject::getEnabled(uInt32 hpos) const 
+{
+  return (isEnabled && (getMaskValue() & myMask[hpos])) ? getEnableBit() & myTIA.myDisabledObjects : 0;
 }
 
 void TIA::AbstractMoveableGraphicObject::handleRegisterUpdate(uInt8 addr, uInt8 value)
@@ -1978,8 +1988,7 @@ void TIA::AbstractMoveableGraphicObject::handleHM(uInt8 value)
   if(myHM == value)
     return;
 
-  Int32 clock = myTIA.mySystem->cycles() * PIXEL_CLOCKS;
-  int hpos  = (clock - myTIA.myClockWhenFrameStarted) % SCANLINE_CLOCKS - HBLANK_CLOCKS;
+  int hpos  = myTIA.posThisLine();
 
   // Check if HMOVE is currently active
   if(myCurrentHMOVEPos != IGNORE_HMOVE_POS &&
@@ -2009,8 +2018,7 @@ void TIA::AbstractMoveableGraphicObject::handleHM(uInt8 value)
 // Write the specified value to the HMOVE registers at the given clock
 void TIA::AbstractMoveableGraphicObject::handleHMOVE()
 {
-  Int32 clock = myTIA.mySystem->cycles() * PIXEL_CLOCKS;
-  int hpos = (clock - myTIA.myClockWhenFrameStarted) % SCANLINE_CLOCKS - HBLANK_CLOCKS;
+  int hpos = myTIA.posThisLine();
 	myCurrentHMOVEPos = hpos;
 
   // Do we have to undo some of the already applied cycles from an
@@ -2109,8 +2117,7 @@ inline void TIA::AbstractMoveableGraphicObject::applyPreviousHMOVEMotion(int hpo
 
 void TIA::AbstractMoveableGraphicObject::handleRES()
 {
-  Int32 clock = myTIA.mySystem->cycles() * PIXEL_CLOCKS;
-  Int32 hpos = (clock - myTIA.myClockWhenFrameStarted) % SCANLINE_CLOCKS - HBLANK_CLOCKS;
+  Int32 hpos = myTIA.posThisLine();
   Int16 newx;
 
   // Check if HMOVE is currently active
@@ -2203,9 +2210,9 @@ void TIA::AbstractPlayer::load(Serializer& in)
 	myCurrentGRP = in.getByte();
 }
 
-uInt8 TIA::AbstractPlayer::getState()
+uInt8 TIA::AbstractPlayer::getState(Int32 clock) const
 {
-	return AbstractMoveableGraphicObject::getState();
+	return AbstractMoveableGraphicObject::getState(clock);
 }
 
 void TIA::AbstractPlayer::handleRegisterUpdate(uInt8 addr, uInt8 value)
@@ -2250,7 +2257,60 @@ void TIA::AbstractPlayer::handleHMOVE()
 
 void TIA::AbstractPlayer::handleNUSIZ(uInt8 value)
 {
-	myNUSIZ = value;
+  myOldNUSIZ = myNUSIZ;
+  myNUSIZClock = myTIA.mySystem->cycles() * PIXEL_CLOCKS;
+
+  // something changed?
+  /*if (value & 7 != myNUSIZ)
+  {
+    // check if change happens while displaying the player
+    static uInt32 width[8]  = { 8, 24, 40, 40, 72, 16, 72, 32};
+    // convert pos into scanline clock
+    uInt32 startClock = myPos + HBLANK_CLOCKS;
+    // get number of clocks which have already beend displayed
+    Int32 elapsedClocks = myTIA.clocksThisLine() - startClock; if (elapsedClocks < 0) elapsedClocks += SCANLINE_CLOCKS;
+    
+    if (elapsedClocks < width[myOldNUSIZ & 7])
+    {
+      // special case: we change NUSIZ while the player is displayed
+
+      //static uInt32 numCopies[8] = { 1,  2,  2,  3,  2,  1,  3,  1};
+      /*static uInt32 copyDist[8]  = { SCANLINE_PIXEL, 16, 32, 16, 64,  SCANLINE_PIXEL, 32, SCANLINE_PIXEL};
+      static uInt32 copyStretch[8] = { 1,  1,  1,  1,  1,  2,  1,  4 };
+    
+      // determine currently displayed copy
+      uInt32 currentCopy = elapsedClocks / copyDist[myOldNUSIZ];
+      // get number of CLK into current copy
+      myNUSIZCLK = (elapsedClocks - currentCopy * copyDist[myOldNUSIZ]) / copyStretch[myOldNUSIZ];*/
+  /*
+      // now we know the copy which was displayed when NUSIZ changed 
+      // and the number of CLK the copy had been displayed already
+
+      // now, when we peek for the player, we need to know
+      // a) if the current copy is still displayed (myOldNUSIZ, myNUSIZClock), then we have to calculate a new, mixed size for it, based on myNUSIZCLK
+      // b) the next copy has already started, then we can simply use the mask again
+      // c) if the old copy is still displaying but a new copy should have started too, then???
+
+      // calculate new myScanCount:
+      // clock = myTIA.mySystem->cycles * PIXEL_CLOCKS;
+      // myScanCount = (myScanCount + (clock - myScanCountClock) / stretch[myNUSIZ]) % SCANLINE_PIXEL;
+      // myScanCountClock = clock;
+      // 188 - 2
+
+    }
+    myNUSIZ = value & 7;
+    Int32 x = (Int32)-34 % 160; // -100 % 160 = -100
+  }*/
+  // TODO: this code works only if there is a current copy showing.
+  static Int32 copyStretch[8] = { 1,  1,  1,  1,  1,  2,  1,  4 };
+  Int32 hpos = myTIA.posThisLine(); if (hpos < 0) hpos = 0;
+  Int32 elapsedPixel = (hpos - myScanCountPos) % SCANLINE_PIXEL; if (elapsedPixel < 0) elapsedPixel += SCANLINE_PIXEL;
+  myScanCount = (myScanCount + elapsedPixel / copyStretch[myNUSIZ & 7]) % SCANLINE_PIXEL;
+  myScanCountPos = hpos;
+  
+
+  //---------------------------------------------------------
+  myNUSIZ = value;
 }
 
 void TIA::AbstractPlayer::handleREFP(uInt8 value)
@@ -2469,9 +2529,9 @@ void TIA::AbstractMissile::load(Serializer& in)
   myRESMP = in.getBool();
 }
 
-uInt8 TIA::AbstractMissile::getState()
+uInt8 TIA::AbstractMissile::getState(Int32 clock) const
 {
-	return AbstractMoveableGraphicObject::getState();
+	return AbstractMoveableGraphicObject::getState(clock);
 }
 
 void TIA::AbstractMissile::handleRegisterUpdate(uInt8 addr, uInt8 value)
@@ -2667,9 +2727,9 @@ void TIA::Ball::load(Serializer& in)
   myCurrentEnabled = in.getBool();
 }
 
-uInt8 TIA::Ball::getState()
+uInt8 TIA::Ball::getState(Int32 clock) const
 {
-	return AbstractMoveableGraphicObject::getState();
+	return AbstractMoveableGraphicObject::getState(clock);
 }
 
 void TIA::Ball::handleRegisterUpdate(uInt8 addr, uInt8 value)
