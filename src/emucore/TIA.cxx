@@ -2311,16 +2311,23 @@ void TIA::AbstractPlayer::handleNUSIZ(uInt8 value)
     myNUSIZ = value & 7;
     Int32 x = (Int32)-34 % 160; // -100 % 160 = -100
   }*/
-  // TODO: this code works only if there is a current copy showing.
-  static Int32 copyStretch[8] = { 1,  1,  1,  1,  1,  2,  1,  4 };
-  Int32 hpos = myTIA.posThisLine(); if (hpos < 0) hpos = 0;
-  Int32 elapsedPixel = (hpos - myScanCountPos) % SCANLINE_PIXEL; if (elapsedPixel < 0) elapsedPixel += SCANLINE_PIXEL;
-  myScanCount = (myScanCount + elapsedPixel / copyStretch[myNUSIZ & 7]) % SCANLINE_PIXEL;
-  myScanCountPos = hpos;
-  
 
-  //---------------------------------------------------------
-  myNUSIZ = value;
+	if (value & 7 != myNUSIZ)
+	{
+		// TODO: shortcut if NUSIZ write happens outside player display
+		static Int32 copyStretch[8] = { 1,  1,  1,  1,  1,  2,  1,  4 };
+
+		// calculate visible pixels between last write (myScanCountPos) and now (TODO: find faster way)
+		Int32 currentLine = myTIA.scanlines();
+		Int32 currentPos = myTIA.visiblePosThisLine();
+		Int32 elapsedPixel = (currentLine - myScanCountLine) * SCANLINE_PIXEL + currentPos - myScanCountPos;
+		
+		// TODO: handle multiple copies
+		myScanCount += elapsedPixel / copyStretch[myNUSIZ & 7];
+		myScanCountLine = currentLine;
+		myScanCountPos = currentPos;
+	}
+  myNUSIZ = value; // TODO: value & 7
 }
 
 void TIA::AbstractPlayer::handleREFP(uInt8 value)

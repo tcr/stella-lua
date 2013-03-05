@@ -233,6 +233,14 @@ class TIA : public Device
 
 
     /** 
+      Returns the current scanline.
+    */
+    inline uInt32 lineFromClock(Int32 clock) const
+    { 
+        return (clock - myClockWhenFrameStarted) / SCANLINE_CLOCKS;
+    }
+
+    /** 
       Returns the position in the visible scanline.
     */
     inline uInt32 posFromClock(Int32 clock) const
@@ -243,10 +251,20 @@ class TIA : public Device
     }
 
     /** 
-      Returns the position in the visible scanline.
+      Returns the position in the current scanline. (-68..159)
     */
-    inline uInt32 posThisLine() const
+    inline Int32 posThisLine() const
       { return clocksThisLine() - HBLANK_CLOCKS; }
+
+    /** 
+      Returns the position in the visible scanline. (0..159)
+    */
+    inline Int32 visiblePosThisLine() const
+    { 
+			Int32 hpos = posThisLine();
+      if (hpos < 0) hpos = 0;
+      return hpos;
+		}
 
     /**
       Answers the current color clock we've gotten to on this scanline.
@@ -806,6 +824,7 @@ class TIA : public Device
     uInt32 myNUSIZCLK;  // 
 
     Int32 myScanCount;     // number of CLK for current copy
+		Int32 myScanCountLine;
     Int32 myScanCountPos;  // clock when myScanCount was calculated
 	};
 
