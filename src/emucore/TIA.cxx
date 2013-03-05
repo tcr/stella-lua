@@ -824,6 +824,8 @@ void TIA::updateFrame(Int32 clock)
   // It's easier to think about this in scanlines rather than color clocks
   uInt32 startLine = (myClockAtLastUpdate - myClockWhenFrameStarted) / SCANLINE_CLOCKS;
   uInt32 endLine = (clock - myClockWhenFrameStarted) / SCANLINE_CLOCKS;
+  // This clock is feed into the getState method of the objects
+  Int32 updateClock = myClockAtLastUpdate;
 
   // Update frame one scanline at a time
   for(uInt32 line = startLine; line <= endLine; ++line) {
@@ -858,6 +860,7 @@ void TIA::updateFrame(Int32 clock)
 
     // Skip over as many horizontal blank clocks as we can
     if(clocksFromStartOfScanLine < HBLANK_CLOCKS) {
+      updateClock += (HBLANK_CLOCKS - clocksFromStartOfScanLine);
       if((HBLANK_CLOCKS - clocksFromStartOfScanLine) < clocksToUpdate)
 			{
 				clocksToUpdate -= (HBLANK_CLOCKS - clocksFromStartOfScanLine);
@@ -880,7 +883,8 @@ void TIA::updateFrame(Int32 clock)
       // See if we're in the vertical blank region
       if(myVBLANK & 0x02) {
         memset(myFramePointer, 0, clocksToUpdate);
-				myFramePointer = ending;
+				updateClock += clocksToUpdate;
+        myFramePointer = ending;
       } else { // Handle all other possible combinations
         // Update masks
 				myPlayer0.updateMask();
@@ -890,17 +894,17 @@ void TIA::updateFrame(Int32 clock)
 				myBall.updateMask();
 
         uInt32 hpos = clocksFromStartOfScanLine - HBLANK_CLOCKS;
-        for(; myFramePointer < ending; ++myFramePointer, ++hpos) {
-					uInt8 enabled = myPlayfield.getEnabled(hpos);					
-          enabled |= myBall.getEnabled(hpos);
-					enabled |= myPlayer1.getEnabled(hpos);
-					enabled |= myMissile1.getEnabled(hpos);
-					enabled |= myPlayer0.getEnabled(hpos);
-					enabled |= myMissile0.getEnabled(hpos);
+        for(; myFramePointer < ending; ++myFramePointer, ++hpos, ++updateClock) {
+          uInt8 enabled = myPlayfield.getState(updateClock);					
+          enabled |= myBall.getState(updateClock);
+					enabled |= myPlayer1.getState(updateClock);
+					enabled |= myMissile1.getState(updateClock);
+					enabled |= myPlayer0.getState(updateClock);
+					enabled |= myMissile0.getState(updateClock);
+          enabled &= myDisabledObjects;
 
-          myCollision |= TIATables::CollisionMask[enabled];
-          *myFramePointer = myColorPtr[myPriorityEncoder[hpos < SCANLINE_PIXEL/2 ? 0 : 1]
-							[enabled | myPlayfield.getPriorityAndScore()]];
+          myCollision |= TIATables::CollisionMask[enabled & ~(ScoreBit | PriorityBit)];
+          *myFramePointer = myColorPtr[myPriorityEncoder[hpos < SCANLINE_PIXEL/2 ? 0 : 1][enabled]];
         }
       }
     } // clocksToUpdate != 0
@@ -1288,6 +1292,8 @@ bool TIA::poke(uInt16 addr, uInt8 value)
 
     case RESP0:   // Reset Player 0
     {
+      myPlayer0.handleRegisterUpdate(addr, value);
+
       Int32 hpos = posThisLine();
       Int16 newx;
 
@@ -1338,6 +1344,8 @@ bool TIA::poke(uInt16 addr, uInt8 value)
 
     case RESP1:   // Reset Player 1
     {
+      myPlayer1.handleRegisterUpdate(addr, value);
+
       Int32 hpos = posThisLine();
       Int16 newx;
 
@@ -1696,7 +1704,7 @@ void TIA::AbstractTIAObject::load(Serializer& in)
 }
 
 // Triggers an update of the object until the current clock, returns true if the current pixel is enabled (TODO: color, priorities).
-uInt8 TIA::AbstractTIAObject::getState()
+uInt8 TIA::AbstractTIAObject::getState(Int32 clock) const
 {
 	return 0;
 }
@@ -1724,7 +1732,7 @@ TIA::Background::Background(const TIA& tia)	: AbstractTIAObject(tia)
 }
 
 // Triggers an update of the object until the current clock, returns true if the current pixel is enabled (TODO: color, priorities).
-uInt8 TIA::Background::getState()
+uInt8 TIA::Background::getState(Int32 clock) const
 {
 	return 0;
 }
@@ -1821,13 +1829,13 @@ void TIA::Playfield::load(Serializer& in)
 
 uInt8 TIA::Playfield::getState(Int32 clock) const
 {
-  uInt32 hpos = myTIA.posThisLine();
-	return AbstractGraphicObject::getState(clock);
+  uInt32 hpos = myTIA.posFromClock(clock); 
+	return getEnabled(hpos);
 }
 
 uInt8 TIA::Playfield::getEnabled(uInt32 hpos) const 
 {
-	return (isEnabled && (getMaskValue() & myMask[hpos])) ? getEnableBit() & myTIA.myDisabledObjects : 0;
+	return myPriorityAndScore | ((isEnabled && (getMaskValue() & myMask[hpos])) ? getEnableBit() : 0);
 }
 
 
@@ -1928,12 +1936,13 @@ void TIA::AbstractMoveableGraphicObject::load(Serializer& in)
 
 uInt8 TIA::AbstractMoveableGraphicObject::getState(Int32 clock) const
 {
-	return AbstractGraphicObject::getState(clock);
+  uInt32 hpos = myTIA.posFromClock(clock); 
+	return getEnabled(hpos);
 }
 
 uInt8 TIA::AbstractMoveableGraphicObject::getEnabled(uInt32 hpos) const 
 {
-  return (isEnabled && (getMaskValue() & myMask[hpos])) ? getEnableBit() & myTIA.myDisabledObjects : 0;
+  return (isEnabled && (getMaskValue() & myMask[hpos])) ? getEnableBit() : 0;
 }
 
 void TIA::AbstractMoveableGraphicObject::handleRegisterUpdate(uInt8 addr, uInt8 value)
@@ -1943,7 +1952,7 @@ void TIA::AbstractMoveableGraphicObject::handleRegisterUpdate(uInt8 addr, uInt8 
 	switch(addr)
 	{
 		case HMCLR:
-			handleHM(value);
+			handleHM(0);
 			break;
 		case HMOVE:
 			handleHMOVE();
@@ -2212,7 +2221,8 @@ void TIA::AbstractPlayer::load(Serializer& in)
 
 uInt8 TIA::AbstractPlayer::getState(Int32 clock) const
 {
-	return AbstractMoveableGraphicObject::getState(clock);
+  uInt32 hpos = myTIA.posFromClock(clock); 
+	return getEnabled(hpos);
 }
 
 void TIA::AbstractPlayer::handleRegisterUpdate(uInt8 addr, uInt8 value)
@@ -2531,7 +2541,8 @@ void TIA::AbstractMissile::load(Serializer& in)
 
 uInt8 TIA::AbstractMissile::getState(Int32 clock) const
 {
-	return AbstractMoveableGraphicObject::getState(clock);
+  uInt32 hpos = myTIA.posFromClock(clock); 
+	return getEnabled(hpos);
 }
 
 void TIA::AbstractMissile::handleRegisterUpdate(uInt8 addr, uInt8 value)
@@ -2729,7 +2740,8 @@ void TIA::Ball::load(Serializer& in)
 
 uInt8 TIA::Ball::getState(Int32 clock) const
 {
-	return AbstractMoveableGraphicObject::getState(clock);
+  uInt32 hpos = myTIA.posFromClock(clock); 
+	return getEnabled(hpos);
 }
 
 void TIA::Ball::handleRegisterUpdate(uInt8 addr, uInt8 value)

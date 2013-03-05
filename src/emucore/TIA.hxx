@@ -231,6 +231,17 @@ class TIA : public Device
     bool isPAL()
       { return float(myPALFrameCounter) / myFrameCounter >= (25.0/60.0); }
 
+
+    /** 
+      Returns the position in the visible scanline.
+    */
+    inline uInt32 posFromClock(Int32 clock) const
+      { 
+        Int32 hpos = (clock - myClockWhenFrameStarted) % SCANLINE_CLOCKS - HBLANK_CLOCKS; 
+        if (hpos < 0) hpos = 0;
+        return hpos;
+    }
+
     /** 
       Returns the position in the visible scanline.
     */
@@ -554,8 +565,8 @@ class TIA : public Device
 		virtual void save(Serializer& out) const;
 		virtual void load(Serializer& in);
     
-		// Triggers an update of the object until the current clock, returns true if the current pixel is enabled (TODO: color, priorities).
-		virtual uInt8 getState();
+		// Triggers an update of the object until the current clock, returns "enable bit" if the current pixel is enabled (TODO: color, priorities).
+		virtual uInt8 getState(Int32 clock) const;
 		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
 		virtual void handleRegisterUpdate(uInt8 addr, uInt8 value);
 		virtual string getName() const = 0;
@@ -581,7 +592,7 @@ class TIA : public Device
 		Background(const TIA& tia);
 
 		// Triggers an update of the object until the current clock, returns true if the current pixel is enabled (TODO: color, priorities).
-		uInt8 getState();
+		uInt8 getState(Int32 clock) const;
 		// Informs the object that a TIA register has been updated. The object decides if and how to handle it.
 		void handleRegisterUpdate(uInt8 addr, uInt8 value);
 		string getName() const {return "BK";};
@@ -635,6 +646,7 @@ class TIA : public Device
 		uInt32 getPF() const {return myPF;}
 		uInt8 getPriorityAndScore() const {return myPriorityAndScore;}
 		uInt8 getEnabled(uInt32 hpos) const ;
+    //uInt8 getEnabled(Int32 clock) const ;
 
 	protected:
     void handleCTRLPF(uInt8 value);
