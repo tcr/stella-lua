@@ -2393,6 +2393,25 @@ inline void TIA::AbstractPlayer::updateMask()
       [getSuppress()][myNUSIZ & 0x07][SCANLINE_PIXEL - (getPos() & 0xFC)];
 }
 
+void TIA::AbstractPlayer::updateCounters()
+{
+	Int32 clockThisScanline = 0;
+	if (myTIA.isVisible(clockThisScanline))
+	{
+		// Player Horizontal Position Counter (PHPC) (0..159)
+		// - main copy starts at 0
+		// - stopped during HMOVE Blank (8 pixel)
+		// - HMOVE counter decreases PHPC (0..15)
+		// HMOVE counter
+		// - decreased every 4 clocks during HBLANK (counts down from 15 to 0)
+		// - compared to HM values, D7 inversed
+		// - first compare at 15, first decrement of PHPC at 17
+		// - Cosmic Ark effect by 
+		
+		// myplayerCounter++
+	}
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TIA::Player0::Player0(const TIA& tia) : AbstractPlayer(tia)

@@ -241,10 +241,18 @@ class TIA : public Device
     }
 
     /** 
+      Returns true if clock is in the visible scanline.
+    */
+		inline bool isVisible(Int32 clock) const
+		{
+			return ((clock - myClockWhenFrameStarted) % SCANLINE_CLOCKS) > HBLANK_CLOCKS;
+		}
+
+    /** 
       Returns the position in the visible scanline.
     */
     inline uInt32 posFromClock(Int32 clock) const
-      { 
+    { 
         Int32 hpos = (clock - myClockWhenFrameStarted) % SCANLINE_CLOCKS - HBLANK_CLOCKS; 
         if (hpos < 0) hpos = 0;
         return hpos;
@@ -779,6 +787,7 @@ class TIA : public Device
 		void handleRegisterUpdate(uInt8 addr, uInt8 value);
 
 		inline void updateMask();
+		void updateCounters();
 
     // getter
     uInt8 getGRP() const {return myGRP;};
@@ -824,6 +833,8 @@ class TIA : public Device
     uInt32 myNUSIZCLK;  // 
 
     Int32 myScanCount;     // number of CLK for current copy
+		Int32 myMotionCount;   // number of CLK for current copy
+
 		Int32 myScanCountLine;
     Int32 myScanCountPos;  // clock when myScanCount was calculated
 	};
