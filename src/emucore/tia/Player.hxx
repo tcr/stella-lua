@@ -128,6 +128,7 @@ class Player : public Serializable
 
     bool myIsReflected;
     bool myIsDelaying;
+    bool myStuffedClock;
 
     TIA* myTIA;
 

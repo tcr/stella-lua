@@ -52,6 +52,7 @@ void Player::reset()
   mySampleCounter = 0;
   myDividerPending = 0;
   myDividerChangeCounter = -1;
+  myStuffedClock = false;
 
   setDivider(1);
   updatePattern();
@@ -263,7 +264,10 @@ bool Player::movementTick(uInt32 clock, bool apply)
     myIsMoving = false;
   }
 
-  if (myIsMoving && apply) tick();
+  if (myIsMoving) {
+    if (apply) tick();
+    else myStuffedClock = true;
+  }
 
   return myIsMoving;
 }
@@ -271,6 +275,11 @@ bool Player::movementTick(uInt32 clock, bool apply)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Player::tick()
 {
+  if (myStuffedClock) {
+    myStuffedClock = false;
+    return;
+  }
+
   if (!myIsRendering || myRenderCounter < myRenderCounterTripPoint)
     collision = myCollisionMaskDisabled;
   else

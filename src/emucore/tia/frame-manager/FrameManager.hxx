@@ -23,6 +23,11 @@
 #include "bspf.hxx"
 #include "JitterEmulation.hxx"
 
+/**
+ * This is the main frame manager class that is used to decode the frame structure during
+ * emulation.
+ */
+
 class FrameManager: public AbstractFrameManager {
   public:
 
