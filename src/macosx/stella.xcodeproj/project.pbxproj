@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1718F79722B05410004EEC1F /* liblua53.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1718F79622B053D0004EEC1F /* liblua53.a */; };
+		175ABE1722960370006ABCAF /* lualib.h in Headers */ = {isa = PBXBuildFile; fileRef = 175ABE0E2296036F006ABCAF /* lualib.h */; };
+		175ABE1822960370006ABCAF /* lua.h in Headers */ = {isa = PBXBuildFile; fileRef = 175ABE0F2296036F006ABCAF /* lua.h */; };
+		175ABE1A22960370006ABCAF /* luaconf.h in Headers */ = {isa = PBXBuildFile; fileRef = 175ABE112296036F006ABCAF /* luaconf.h */; };
+		175ABE1C22960370006ABCAF /* lua.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 175ABE1322960370006ABCAF /* lua.hpp */; };
+		175ABE1D22960370006ABCAF /* lauxlib.h in Headers */ = {isa = PBXBuildFile; fileRef = 175ABE1422960370006ABCAF /* lauxlib.h */; };
 		2D9173CB09BA90380026E9FF /* SDLMain.h in Headers */ = {isa = PBXBuildFile; fileRef = F5A47A9D01A0482F01D3D55B /* SDLMain.h */; };
 		2D9173CC09BA90380026E9FF /* Booster.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 2DE2DF110627AE07006BEC99 /* Booster.hxx */; };
 		2D9173CD09BA90380026E9FF /* Cart.hxx in Headers */ = {isa = PBXBuildFile; fileRef = 2DE2DF130627AE07006BEC99 /* Cart.hxx */; };
@@ -678,6 +684,12 @@
 
 /* Begin PBXFileReference section */
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
+		1718F79622B053D0004EEC1F /* liblua53.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = liblua53.a; sourceTree = "<group>"; };
+		175ABE0E2296036F006ABCAF /* lualib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lualib.h; sourceTree = "<group>"; };
+		175ABE0F2296036F006ABCAF /* lua.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lua.h; sourceTree = "<group>"; };
+		175ABE112296036F006ABCAF /* luaconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = luaconf.h; sourceTree = "<group>"; };
+		175ABE1322960370006ABCAF /* lua.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = lua.hpp; sourceTree = "<group>"; };
+		175ABE1422960370006ABCAF /* lauxlib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lauxlib.h; sourceTree = "<group>"; };
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		2D02207F08A301F200B9C76B /* InputTextDialog.cxx */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = InputTextDialog.cxx; sourceTree = "<group>"; };
@@ -1306,6 +1318,7 @@
 				2D91750F09BA90380026E9FF /* Cocoa.framework in Frameworks */,
 				2D91751009BA90380026E9FF /* OpenGL.framework in Frameworks */,
 				2D91751209BA90380026E9FF /* ApplicationServices.framework in Frameworks */,
+				1718F79722B05410004EEC1F /* liblua53.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1336,6 +1349,18 @@
 			name = "Other Frameworks";
 			sourceTree = "<group>";
 		};
+		175ABE0D22960367006ABCAF /* lua */ = {
+			isa = PBXGroup;
+			children = (
+				175ABE1422960370006ABCAF /* lauxlib.h */,
+				175ABE0F2296036F006ABCAF /* lua.h */,
+				175ABE1322960370006ABCAF /* lua.hpp */,
+				175ABE112296036F006ABCAF /* luaconf.h */,
+				175ABE0E2296036F006ABCAF /* lualib.h */,
+			);
+			name = lua;
+			sourceTree = "<group>";
+		};
 		19C28FACFE9D520D11CA2CBB /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -1362,6 +1387,7 @@
 		29B97315FDCFA39411CA2CEA /* Other Sources */ = {
 			isa = PBXGroup;
 			children = (
+				175ABE0D22960367006ABCAF /* lua */,
 				DCCC0C9109C3541E0088BFF1 /* cheat */,
 				2D6050C5089876F300C6DE89 /* common */,
 				2D605130089879BA00C6DE89 /* debugger */,
@@ -1380,6 +1406,7 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				1718F79622B053D0004EEC1F /* liblua53.a */,
 				DCA43BFF10DED5890070CEFD /* Info-Stella.plist */,
 				55FE2A3C1EE487CA00078ADE /* InfoPlist.strings */,
 				2D113E090672BF2100317017 /* docs */,
@@ -2125,6 +2152,7 @@
 				DC73BD8A1915E5E3003FAFAD /* FBSurface.hxx in Headers */,
 				2D9173D509BA90380026E9FF /* CartE7.hxx in Headers */,
 				2D9173D609BA90380026E9FF /* CartF4.hxx in Headers */,
+				175ABE1822960370006ABCAF /* lua.h in Headers */,
 				2D9173D709BA90380026E9FF /* CartF4SC.hxx in Headers */,
 				DCF3A6FD1DFC75E3008A8AF3 /* Playfield.hxx in Headers */,
 				2D9173D809BA90380026E9FF /* CartF6.hxx in Headers */,
@@ -2168,6 +2196,7 @@
 				2D91740109BA90380026E9FF /* AudioDialog.hxx in Headers */,
 				DC71EA9E1FDA06D2008827CB /* CartE78K.hxx in Headers */,
 				2D91740209BA90380026E9FF /* BrowserDialog.hxx in Headers */,
+				175ABE1D22960370006ABCAF /* lauxlib.h in Headers */,
 				2D91740309BA90380026E9FF /* Command.hxx in Headers */,
 				DC3EE85B1E2C0E6D00905161 /* deflate.h in Headers */,
 				2D91740409BA90380026E9FF /* Dialog.hxx in Headers */,
@@ -2198,6 +2227,7 @@
 				2D91741A09BA90380026E9FF /* FSNode.hxx in Headers */,
 				2D91741B09BA90380026E9FF /* OSystem.hxx in Headers */,
 				2D91741D09BA90380026E9FF /* Preferences.h in Headers */,
+				175ABE1C22960370006ABCAF /* lua.hpp in Headers */,
 				DC6A18F919B3E65500DEB242 /* CartMDMWidget.hxx in Headers */,
 				2D91741F09BA90380026E9FF /* AboutBox.h in Headers */,
 				2D91742009BA90380026E9FF /* ConsoleFont.hxx in Headers */,
@@ -2243,6 +2273,7 @@
 				2D91745909BA90380026E9FF /* PromptWidget.hxx in Headers */,
 				DC2AADAF194F389C0026C7A4 /* CartDASH.hxx in Headers */,
 				2D91745A09BA90380026E9FF /* RamWidget.hxx in Headers */,
+				175ABE1722960370006ABCAF /* lualib.h in Headers */,
 				2D91745B09BA90380026E9FF /* RomListWidget.hxx in Headers */,
 				2D91745C09BA90380026E9FF /* RomWidget.hxx in Headers */,
 				2D91745D09BA90380026E9FF /* TiaInfoWidget.hxx in Headers */,
@@ -2269,6 +2300,7 @@
 				DC8078EB0B4BD697005E9305 /* UIDialog.hxx in Headers */,
 				DCEECE570B5E5E540021D754 /* Cart0840.hxx in Headers */,
 				DCE3BBFA0C95CEDC00A671DF /* RomInfoWidget.hxx in Headers */,
+				175ABE1A22960370006ABCAF /* luaconf.h in Headers */,
 				DC0984860D3985160073C852 /* CartSB.hxx in Headers */,
 				DCEC585E1E945175002F0246 /* DelayQueueIterator.hxx in Headers */,
 				DCA23AEA0D75B22500F77B33 /* CartX07.hxx in Headers */,
@@ -2863,7 +2895,11 @@
 				);
 				INFOPLIST_FILE = "Info-Stella.plist";
 				INSTALL_PATH = "$(HOME)/Applications";
-				LIBRARY_SEARCH_PATHS = "$(LIBRARY_SEARCH_PATHS)";
+				LIBRARY_SEARCH_PATHS = (
+					"$(LIBRARY_SEARCH_PATHS)",
+					"$(PROJECT_DIR)",
+					/usr/local/Cellar/lua/5.3.5_1/lib,
+				);
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "-lz";
 				PRODUCT_BUNDLE_IDENTIFIER = "Stella-emu";
@@ -2915,7 +2951,11 @@
 				);
 				INFOPLIST_FILE = "Info-Stella.plist";
 				INSTALL_PATH = "$(HOME)/Applications";
-				LIBRARY_SEARCH_PATHS = "$(LIBRARY_SEARCH_PATHS)";
+				LIBRARY_SEARCH_PATHS = (
+					"$(LIBRARY_SEARCH_PATHS)",
+					"$(PROJECT_DIR)",
+					/usr/local/Cellar/lua/5.3.5_1/lib,
+				);
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "-lz";
 				PRODUCT_BUNDLE_IDENTIFIER = "Stella-emu";

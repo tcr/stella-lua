@@ -26,6 +26,7 @@
         "string_view": "cpp",
         "system_error": "cpp",
         "vector": "cpp",
-        "stdexcept": "cpp"
+        "stdexcept": "cpp",
+        "functional": "cpp"
     }
 }
