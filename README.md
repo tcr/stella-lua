@@ -1,3 +1,23 @@
+# Stella Lua
+
+Stella debugger with integrated ability to run Lua scripts with access to processor state.
+
+Instructions:
+
+```
+lua filename
+```
+
+Available globals:
+
+* `cpu()` is a map of registers, e.g. `cpu()['A']` is the accumulator.
+* `label(string)` will read a value from the memory map.
+* `peek(number)` will read a value from the memory map.
+
+You can also import files, e.g. `require('./json.lua')`.
+
+---
+
 Stella is a multi-platform Atari 2600 VCS emulator which allows you to
 play all of your favourite Atari 2600 games on your PC.  You'll find the
 Stella Users Manual in the docs subdirectory.  If you'd like to verify
